@@ -1,0 +1,13 @@
+{
+    "http": {
+        "logger": true
+    },
+    "store": {
+        "path": "./data/store/",
+        "dbName": "Hyperbee DB"
+    },
+    "testClient": {
+        "path":  "./data/client/",
+        "coreName": "Alice"
+    }
+}
