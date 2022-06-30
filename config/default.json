@@ -1,11 +1,13 @@
 {
     "http": {
-        "logger": true,
+        "logger": false,
         "port": 3000
     },
     "store": {
         "path": "./data/store/",
-        "dbName": "Hyperbee DB"
+        "dbName": "Hyperbee DB",
+        "emptyLifespan": "1d",
+        "fullLifespan": "12w"
     },
     "testClient": {
         "path":  "./data/client/",
