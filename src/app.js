@@ -11,7 +11,7 @@ export default class App extends EventEmitter {
     async start() {
         try {
             await this.defineRoutes()
-            await this.server.listen({ port: 3000 })
+            await this.server.listen({ port: config.get('http.port') })
         } catch (err) {
             this.server.log.error(err)
             process.exit(1)

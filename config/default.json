@@ -1,6 +1,7 @@
 {
     "http": {
-        "logger": true
+        "logger": true,
+        "port": 3000
     },
     "store": {
         "path": "./data/store/",
