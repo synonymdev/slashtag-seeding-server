@@ -101,12 +101,15 @@ export default class Seeder {
         // Do we care about this item any more?
         if (await this._emptyAndOld(key, core.discoveryKey, core.length)) {
             console.log(`${keyStr} is still empty for more than ${this.emptyLifespan}ms. removed.`)
+            this._dropItem(key, core.discoveryKey)
+
             return
         }
 
         // items that have not been updated for a long long time can also be dropped
         if (await this._hasBeenAbandoned(key, core.discoveryKey)) {
             console.log(`${keyStr} is not been updated for over ${this.fullLifespan}ms. removed.`)
+            this._dropItem(key, core.discoveryKey)
             return
         }
 
@@ -150,10 +153,9 @@ export default class Seeder {
      * Tries to decide if the hypercore with the given key has been abandoned
      * This is the case if it has been > `fullLifespan` ms since the last update to the core
      * @param {*} key
-     * @param {*} discoveryKey
      * @returns true if it has been abandoned, false if not
      */
-    async _hasBeenAbandoned(key, discoveryKey) {
+    async _hasBeenAbandoned(key) {
         // Do we care about this item any more?
         // It's empty - see if we have been watching it for a while
         const item = await this._getValue(key)
@@ -167,7 +169,6 @@ export default class Seeder {
         }
 
         // Drop this item then
-        this._dropItem(key, discoveryKey)
         return true
     }
 
@@ -175,29 +176,27 @@ export default class Seeder {
      * Is the hypercore still empty and older than some threshold
      * If we are given an empty hypercore that is never updated, we want to discard it eventually
      * @param {*} key
-     * @param {*} discoveryKey
      * @param {*} length
      * @returns true if the hypercore is still empty and has been for a while, false if not
      */
-    async _emptyAndOld(key, discoveryKey, length) {
+    async _emptyAndOld(key, length) {
         if (length > 0) {
             return false
         }
 
         // Do we care about this item any more?
         // It's empty - see if we have been watching it for a while
-        const now = Date.now()
         const item = await this._getValue(key)
         if (item === null) {
             return false
         }
 
+        const now = Date.now()
         if ((now - item.lastUpdated) < this.emptyLifespan) {
             return false
         }
 
         // Yes, it is empty and old. Remove it from the DB
-        this._dropItem(key, discoveryKey)
         return true
     }
 
@@ -215,15 +214,19 @@ export default class Seeder {
     /**
      * Fetch and decode a key from the DB
      * @param {*} key
-     * @returns
+     * @returns the stored object, or null
      */
     async _getValue(key) {
-        const item = await this.db.get(key)
-        if (item === null) {
+        try {
+            const item = await this.db.get(key)
+            if (item === null) {
+                return null
+            }
+
+            return JSON.parse(item.value)
+        } catch (err) {
             return null
         }
-
-        return JSON.parse(item.value)
     }
 
     /**
