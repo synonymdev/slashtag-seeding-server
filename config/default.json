@@ -3,6 +3,9 @@
         "logger": false,
         "port": 3000
     },
+    "bootstrapper": {
+        "port": 4000
+    },
     "store": {
         "path": "./data/store/",
         "dbName": "Hyperbee DB",
