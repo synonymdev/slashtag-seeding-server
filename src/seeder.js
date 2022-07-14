@@ -114,7 +114,7 @@ export default class Seeder {
         }
 
         // Now we can download the whole thing
-        core.download();
+        core.download({ start: 0, end: -1 });
         core.on('download', async (index) => {
             console.log(`${keyStr} downloaded block ${index}`);
             await this._putValue(key, core.length)
