@@ -43,9 +43,9 @@ export default class Seeder {
      * Call to add a new hypercore to the DB and start seeding it
      * @param {*} key - the public key of the hypercore (Buffer)
      */
-    async registerItem(key) {
+    async registerHypercore(key) {
         const keyStr = this._fmtKey(key)
-        console.log(`Registering item with key ${keyStr}`)
+        console.log(`Registering hypercore with key ${keyStr}`)
         if (!this.store || !this.swarm) {
             throw new Error('Must call start() before registering items')
         }
@@ -73,7 +73,7 @@ export default class Seeder {
     async _beginSeeding(key) {
         // create a core in the store from a known key
         const keyStr = this._fmtKey(key)
-        console.log(`Begin seeding ${keyStr}`)
+        console.log(`Begin seeding hypercore ${keyStr}`)
 
         const core = this.store.get({ key })
         await core.ready()
@@ -96,7 +96,7 @@ export default class Seeder {
         // While that is happening, try and update the core,
         // so we know how much data it should contain
         await core.update();
-        console.log(`Tracking core ${keyStr}. Length: ${core.length}`)
+        console.log(`Tracking hypercore ${keyStr}. Length: ${core.length}`)
 
         // Do we care about this item any more?
         if (await this._emptyAndOld(key, core.discoveryKey, core.length)) {

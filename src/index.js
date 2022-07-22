@@ -7,5 +7,5 @@ await seeder.start()
 
 // Create the HTTP server app
 const app = new App()
-app.on('keyDiscovered', async (data) => seeder.registerItem(data.key))
+app.on('keyDiscovered', async (data) => seeder.registerHypercore(data.key))
 await app.start()

@@ -21,13 +21,13 @@ export default class App extends EventEmitter {
     async defineRoutes() {
         this.server.route({
             method: 'POST',
-            url: '/register-core',
+            url: '/seeding/hypercore',
             schema: {
                 body: {
                     type: 'object',
-                    required: ['core'],
+                    required: ['publicKey'],
                     properties: {
-                        core: { type: 'string' }
+                        publicKey: { type: 'string' }
                     }
                 },
                 response: {
@@ -40,7 +40,7 @@ export default class App extends EventEmitter {
                 }
             },
             handler: async (request, reply) => {
-                this.emit('keyDiscovered', { key: Buffer.from(request.body.core, 'hex') })
+                this.emit('keyDiscovered', { key: Buffer.from(request.body.publicKey, 'hex') })
                 return { status: 'ok' }
             }
         })
