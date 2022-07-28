@@ -21,6 +21,17 @@ console.log("PublicKey", core.key.toString('hex'))
 
 // Create a hyperswarm and advertise the core to any interested peers
 const swarm = new Hyperswarm()
-swarm.on('connection', (conn, peerInfo) => store.replicate(conn))
+swarm.on('connection', (conn, peerInfo) => {
+    console.log('Seen connection from peer')
+    store.replicate(conn)
+})
 
 swarm.join(core.discoveryKey)
+
+// a second core
+const other = store.get({ name: config.get('testClient.coreName') + 'other' })
+await other.ready()
+await other.append(['hello', 'world'])
+swarm.join(other.discoveryKey)
+console.log("Other DiscoveryKey", other.discoveryKey.toString('hex'))
+console.log("Other PublicKey", other.key.toString('hex'))
