@@ -44,5 +44,34 @@ export default class App extends EventEmitter {
                 return { status: 'ok' }
             }
         })
+
+        this.server.route({
+            method: 'DELETE',
+            url: '/seeding/hypercore/:key',
+            schema: {
+                params: {
+                    type: 'object',
+                    required: ['key'],
+                    properties: {
+                        key: {
+                            type: 'string',
+                            pattern: '^[a-fA-F0-9]{64}$'
+                        }
+                    }
+                },
+                response: {
+                    200: {
+                        type: 'object',
+                        properties: {
+                            status: { type: 'string' }
+                        }
+                    }
+                }
+            },
+            handler: async (request, reply) => {
+                this.emit('deleteKey', { key: Buffer.from(request.params.key, 'hex') })
+                return { status: 'ok' }
+            }
+        })
     }
 }

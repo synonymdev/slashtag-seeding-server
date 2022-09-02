@@ -24,8 +24,18 @@ export default class Seeder {
         await this.store.ready()
 
         // start a swarm
+        this.connections = {}
         this.swarm = new Hyperswarm()
-        this.swarm.on('connection', (conn) => this.store.replicate(conn))
+        this.swarm.on('connection', (connection, peerInfo) => {
+            // track peer connections so we can disconnect later
+            peerInfo.topics.forEach((topic) => {
+                this.connections[topic.toString('hex')] = connection
+                console.log(`tracking connection on topic ${topic.toString('hex')}`)
+            })
+
+            // replace any cores we have in common
+            this.store.replicate(connection)
+        })
 
         // set up the key value DB
         const feed = this.store.get({ name: config.get('store.dbName') })
@@ -50,12 +60,48 @@ export default class Seeder {
             throw new Error('Must call start() before registering items')
         }
 
-        if (await this._alreadyExists(key)) {
-            console.log(`${keyStr} has already been registered. ignoring`)
-            return;
+        // See if we are already tracking this hypercore
+        const item = await this._getValue(key)
+        if (item !== null) {
+            console.log(`${keyStr} has already been registered. Update last seen time.`)
+            this._putValue(key, item.length, true)
+            return
         }
 
         await this._beginSeeding(key)
+    }
+
+    /**
+     * Stop tracking a hypercore
+     * @param {*} key 
+     * @returns 
+     */
+    async removeHypercore(key) {
+        const keyStr = this._fmtKey(key)
+        console.log(`Stop tracking ${keyStr}`)
+
+        const item = await this._getValue(key)
+        if (item === null) {
+            // was not being tracked anyway, so we're done
+            console.log(`Was not tracking ${keyStr}, so ignore deletion request`)
+            return
+        }
+
+        // Find the core so we can stop listening on its topic
+        const core = this.store.get({ key })
+        await core.ready()
+        await this._dropItem(key, core.discoveryKey)
+
+        // try and end any active connection with a peer for this hypercore
+        const topic = core.discoveryKey.toString('hex')
+        if (this.connections[topic]) {
+            this.connections[topic].end()
+            this.connections[topic] = undefined
+        }
+
+        // close the core
+        await core.close()
+        console.log(`Dropped ${keyStr}`)
     }
 
     /**
@@ -136,17 +182,6 @@ export default class Seeder {
                 .then(cleanup, cleanup)
                 .then(cb, cb)
         }
-    }
-
-    /**
-     * Determine if the given key is one we already track
-     * @param {*} key
-     * @returns true if we are tracking it. false if not
-     */
-    async _alreadyExists(key) {
-        const item = await this._getValue(key)
-
-        return item !== null
     }
 
     /**
@@ -236,11 +271,11 @@ export default class Seeder {
      * @param {*} length
      * @returns
      */
-    async _putValue(key, length) {
+    async _putValue(key, length, updateWhenSameLength = false) {
         const cas = (prev, next) => {
             const p = { length: 0, ...JSON.parse(prev.value) }
             const n = { length: 0, ...JSON.parse(next.value) }
-            return (p.length < n.length)
+            return updateWhenSameLength ? (n.length >= p.length) : (n.length > p.length)
         }
 
         const value = {
