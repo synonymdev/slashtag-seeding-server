@@ -44,6 +44,7 @@ export default class SlashServer extends EventEmitter {
             try {
                 logger.info('Seed Add')
                 logger.info(req)
+                this.emit('keyDiscovered', req)
             } catch (err) {
                 // log it
                 logger.error(`seedAdd failed`)
@@ -55,6 +56,7 @@ export default class SlashServer extends EventEmitter {
             try {
                 logger.info('Seed Remove')
                 logger.info(req)
+                this.emit('deleteKey', req)
             } catch (err) {
                 // log it
                 logger.error(`seedRemove failed`)

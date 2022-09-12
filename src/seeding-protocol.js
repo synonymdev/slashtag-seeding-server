@@ -16,30 +16,30 @@ export default class SeedingProtocol extends SlashtagsRPC {
         return c.string;
     }
 
-    get handshakeEncoding() {
-        return c.string;
-    }
-
-    handshake(socket) {
-        return this.id + '-handshake:for:' + socket.remotePublicKey.toString('hex');
-    }
-
-    onopen(handshake, socket) {
-        this.emit('handshake', handshake, socket.reomtePublicKey);
-    }
-
     get methods() {
         const self = this;
         return [
             {
                 name: 'seedAdd',
-                handler: (req) => logger.info(req),
+                handler: (req) => this.onAddSeed(req),
             },
             {
                 name: 'seedRemove',
-                handler: (req) => logger.info(req),
+                handler: (req) => this.onRemoveSeed(req),
             },
         ];
+    }
+
+    onAddSeed(req) {
+        logger.info(req)
+        this.emit('seedAdd', { key: Buffer.from(req, 'hex') })
+        return 'ok'
+    }
+
+    onRemoveSeed(req) {
+        logger.info(req)
+        this.emit('seedRemove', { key: req })
+        return 'ok'
     }
 
     /**
@@ -49,8 +49,7 @@ export default class SeedingProtocol extends SlashtagsRPC {
      * @returns 
      */
     async seedAdd(seedingServerSlashtag, hypercorePubKey) {
-        logger.info('sending seedAdd')
         const rpc = await this.rpc(seedingServerSlashtag);
-        return rpc?.request('seedAdd', hypercorePubKey);
+        return rpc.request('seedAdd', hypercorePubKey);
     }
 }
