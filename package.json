@@ -10,6 +10,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@synonymdev/slashtags-rpc": "^1.0.0-alpha.1",
+    "@synonymdev/slashtags-sdk": "^1.0.0-alpha.16",
+    "compact-encoding": "^2.11.0",
     "config": "^3.3.7",
     "corestore": "^6.0.3",
     "fastify": "^4.2.0",

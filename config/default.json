@@ -12,8 +12,11 @@
         "emptyLifespan": "1d",
         "fullLifespan": "12w"
     },
+    "slashtags": {
+        "primaryKey": ""
+    },
     "testClient": {
-        "path":  "./data/client/",
+        "path": "./data/client/",
         "coreName": "Alice"
     }
 }
