@@ -50,6 +50,6 @@ export default class SeedingProtocol extends SlashtagsRPC {
      */
     async seedAdd(seedingServerSlashtag, hypercorePubKey) {
         const rpc = await this.rpc(seedingServerSlashtag);
-        return rpc.request('seedAdd', hypercorePubKey);
+        return rpc?.request('seedAdd', hypercorePubKey);
     }
 }

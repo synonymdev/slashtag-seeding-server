@@ -5,6 +5,9 @@ import SeedingProtocol from './seeding-protocol.js'
 import Corestore from 'corestore'
 import Hyperswarm from 'hyperswarm'
 
+// The server will report this when it starts. update this to match your local test server
+const serverSlashtag = 'slash:qybsuau56f3a6i7w3yo54aq66mcia9ix8uixba3fcdiq7hib5dmo'
+
 // the sore...
 const store = new Corestore(config.get('testClient.path'))
 await store.ready()
@@ -58,7 +61,7 @@ logger.info(`Seeding Client Slashtag - ${st.url}`)
 // Get the seeding protocol to add our hooks
 try {
     const seeding = new SeedingProtocol(st)
-    const response = await seeding.seedAdd('slash:qybsuau56f3a6i7w3yo54aq66mcia9ix8uixba3fcdiq7hib5dmo', core.key.toString('hex'))
+    const response = await seeding.seedAdd(serverSlashtag, core.key.toString('hex'))
     logger.info(response)
 } catch (err) {
     logger.error(err)
