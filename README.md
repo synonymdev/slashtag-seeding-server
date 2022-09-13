@@ -4,6 +4,21 @@ Seeds Hypercores
 
 Make HTTP requests to the this server to tell it about new Hypercores to be seeded. It will then track and maintain an in-sync copy of the hypercore.
 
+## Add seeds using Slashtags
+
+```
+// The slashtags (mine one, and the seeding servers)
+const mySlashtag = 'slash:...my slashtag...'
+const serverSlashtag = 'slash:...servers slashtag here...'
+
+// A hypercore you want to seed (probably shared on hyperswarm)
+const core = ... your hypercore that you want to seed ...
+
+// Create the protocol and add the hypercores public key to the seeding list
+const protocol = new SeedingProtocol(mySlashtag)
+const response = await protocol.seedAdd(serverSlashtag, core.key.toString('hex'))
+```
+
 ## The Web Server
 
 By default listens on port 3000 (see config)
@@ -21,6 +36,7 @@ POST `/register-core` with a json body...
 * **http.port**: the port for the http server to listen on
 * **store.path**: The path to a folder where the app will store data (for hypercores, key/value store etc)
 * **store.dbName**: A name used to derive the keys for the hyperbee key value store
+* **slashtags.primaryKey**: The key used to derive the servers slashtag
 * **testClient.path**: The path to store data for the test client
 * **testClient.coreName**: The name used to derive the keys for the test hypercore that is created
 
