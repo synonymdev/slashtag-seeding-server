@@ -3,6 +3,7 @@ import Hyperswarm from 'hyperswarm'
 import Corestore from 'corestore'
 import Hyperbee from 'hyperbee'
 import ms from './time-to-milliseconds.js'
+import logger from './logger.js'
 
 
 export default class Seeder {
@@ -30,7 +31,7 @@ export default class Seeder {
             // track peer connections so we can disconnect later
             peerInfo.topics.forEach((topic) => {
                 this.connections[topic.toString('hex')] = connection
-                console.log(`tracking connection on topic ${topic.toString('hex')}`)
+                logger.info(`tracking connection on topic ${topic.toString('hex')}`)
             })
 
             // replace any cores we have in common
@@ -55,7 +56,7 @@ export default class Seeder {
      */
     async registerHypercore(key) {
         const keyStr = this._fmtKey(key)
-        console.log(`Registering hypercore with key ${keyStr}`)
+        logger.info(`Registering hypercore with key ${keyStr}`)
         if (!this.store || !this.swarm) {
             throw new Error('Must call start() before registering items')
         }
@@ -63,12 +64,21 @@ export default class Seeder {
         // See if we are already tracking this hypercore
         const item = await this._getValue(key)
         if (item !== null) {
-            console.log(`${keyStr} has already been registered. Update last seen time.`)
+            logger.info(`${keyStr} has already been registered. Update last seen time.`)
             this._putValue(key, item.length, true)
             return
         }
 
         await this._beginSeeding(key)
+    }
+
+    /**
+     * Find the state of the hypercore with the given key
+     * @param {*} key 
+     * @returns 
+     */
+    async getHypercoreStatus(key) {
+        return this._getValue(key)
     }
 
     /**
@@ -78,19 +88,18 @@ export default class Seeder {
      */
     async removeHypercore(key) {
         const keyStr = this._fmtKey(key)
-        console.log(`Stop tracking ${keyStr}`)
+        logger.info(`Stop tracking ${keyStr}`)
 
         const item = await this._getValue(key)
         if (item === null) {
             // was not being tracked anyway, so we're done
-            console.log(`Was not tracking ${keyStr}, so ignore deletion request`)
+            logger.info(`Was not tracking ${keyStr}, so ignore deletion request`)
             return
         }
 
         // Find the core so we can stop listening on its topic
         const core = this.store.get({ key })
         await core.ready()
-        await this._dropItem(key, core.discoveryKey)
 
         // try and end any active connection with a peer for this hypercore
         const topic = core.discoveryKey.toString('hex')
@@ -101,7 +110,9 @@ export default class Seeder {
 
         // close the core
         await core.close()
-        console.log(`Dropped ${keyStr}`)
+
+        await this._dropItem(key, core.discoveryKey)
+        logger.info(`Dropped ${keyStr}`)
     }
 
     /**
@@ -119,7 +130,7 @@ export default class Seeder {
     async _beginSeeding(key) {
         // create a core in the store from a known key
         const keyStr = this._fmtKey(key)
-        console.log(`Begin seeding hypercore ${keyStr}`)
+        logger.debug(`Begin seeding hypercore ${keyStr}`)
 
         const core = this.store.get({ key })
         await core.ready()
@@ -142,11 +153,11 @@ export default class Seeder {
         // While that is happening, try and update the core,
         // so we know how much data it should contain
         await core.update();
-        console.log(`Tracking hypercore ${keyStr}. Length: ${core.length}`)
+        logger.debug(`Tracking hypercore ${keyStr}. Length: ${core.length}`)
 
         // Do we care about this item any more?
         if (await this._emptyAndOld(key, core.discoveryKey, core.length)) {
-            console.log(`${keyStr} is still empty for more than ${this.emptyLifespan}ms. removed.`)
+            logger.info(`${keyStr} is still empty for more than ${this.emptyLifespan}ms. removed.`)
             this._dropItem(key, core.discoveryKey)
 
             return
@@ -154,7 +165,7 @@ export default class Seeder {
 
         // items that have not been updated for a long long time can also be dropped
         if (await this._hasBeenAbandoned(key, core.discoveryKey)) {
-            console.log(`${keyStr} is not been updated for over ${this.fullLifespan}ms. removed.`)
+            logger.info(`${keyStr} is not been updated for over ${this.fullLifespan}ms. removed.`)
             this._dropItem(key, core.discoveryKey)
             return
         }
@@ -162,8 +173,13 @@ export default class Seeder {
         // Now we can download the whole thing
         core.download({ start: 0, end: -1 });
         core.on('download', async (index) => {
-            console.log(`${keyStr} downloaded block ${index}`);
-            await this._putValue(key, core.length)
+            logger.debug(`${keyStr} downloaded block ${index}`);
+            if (await this._getValue(key) !== null) {
+                await this._putValue(key, core.length)
+            } else {
+                logger.debug('No longer tracked')
+                core.close()
+            }
         });
     }
 
@@ -241,9 +257,9 @@ export default class Seeder {
      * @param {*} discoveryKey
      */
     async _dropItem(key, discoveryKey) {
-        console.log(`Removing ${this._fmtKey(key)} from tracking`)
-        await this.db.del(key)
+        logger.debug(`Removing ${this._fmtKey(key)} from tracking`)
         await this.swarm.leave(discoveryKey)
+        await this.db.del(key)
     }
 
     /**
