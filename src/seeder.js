@@ -170,7 +170,7 @@ export default class Seeder {
         logger.debug(`Tracking hypercore ${keyStr}. Length: ${core.length}`)
 
         // Do we care about this item any more?
-        if (await this._emptyAndOld(key, core.discoveryKey, core.length)) {
+        if (await this._emptyAndOld(key, core.length)) {
             logger.info(`${keyStr} is still empty for more than ${this.emptyLifespan}ms. removed.`)
             this._dropItem(key, core.discoveryKey)
 
