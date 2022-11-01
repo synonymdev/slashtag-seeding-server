@@ -48,6 +48,25 @@ export default class Seeder {
 
         // monitor historical requests
         this._seedExistingItems()
+
+        // log the status of things from time to time
+        setInterval(() => this.logStatus(), 1000 * 60 * 10)
+    }
+
+    /**
+     * Report on the number of seeding topics are in use
+     */
+    logStatus() {
+        const counts = new Map()
+        for (let peerInfo of this.swarm.peers.values()) {
+            for (let topic of peerInfo.topics) {
+                const t = topic.toString('hex')
+                const current = counts.get(t) || 0
+                counts.set(t, current + 1)
+            }
+        }
+
+        logger.info(`Seeding on ${counts.size} topics...`)
     }
 
     /**
@@ -119,8 +138,16 @@ export default class Seeder {
      * Find all the items in the DB and start seeding them again
      */
     async _seedExistingItems() {
+        const keys = []
         const stream = this.db.createReadStream()
-        stream.on('data', async (data) => await this._beginSeeding(data.key))
+        stream.on('data', (data) => keys.push(data.key))
+        stream.on('end', async () => {
+            // add them one at a time so we don't overload everything
+            logger.info(`Starting to seed ${keys.length} existing hypercores`)
+            for (let i = 0; i < keys.length; i += 1) {
+                await this._beginSeeding(keys[i])
+            }
+        })
     }
 
     /**
