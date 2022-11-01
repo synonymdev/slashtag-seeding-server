@@ -167,19 +167,6 @@ export default class Seeder {
 
         // join the core's topic
         this.swarm.join(core.discoveryKey)
-
-        // Ask the core for a callback we can use to tell it when the flush completes
-        // (We need this so the core can stop checking at this point)
-        const onComplete = core.findingPeers();
-
-        // In the background, start flushing the swarm
-        // we take care to ensure that we only track one active flush operation
-        // mostly to help with startup
-        this._flushIfNeeded(onComplete)
-
-        // While that is happening, try and update the core,
-        // so we know how much data it should contain
-        await core.update();
         logger.debug(`Tracking hypercore ${keyStr}. Length: ${core.length}`)
 
         // Do we care about this item any more?
