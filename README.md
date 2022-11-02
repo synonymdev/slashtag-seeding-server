@@ -23,10 +23,22 @@ const response = await protocol.seedAdd(serverSlashtag, core.key.toString('hex')
 
 By default listens on port 3000 (see config)
 
-POST `/register-core` with a json body...
+POST `/seeding/hypercore` with a json body...
 ```
 {
-    "core": "public key of hypercore"
+    "publicKey": "public key of hypercore, hex encoded"
+}
+```
+
+GET `/seeding/hypercore/:key`
+where :key is the hex encoded public key of a hypercore.
+Queries the seeding server for up to date information about a specific hypercore.
+A 200 response will contain the following
+```
+{
+    key: <public key>,
+    length: <current length of the hypercore on the seeding server>,
+    lastUpdated: <when the seeding server last saw a change (ms timestamp)>,
 }
 ```
 
@@ -44,14 +56,8 @@ To change the config from the defaults found in `config/default.json`, you shoul
 
 ## Inner workings...
 
-When a new hypercore is given to the seeding server (via an http request), we create a local copy of the hypercore. We join a topic (the hypercores discovery key) in the hyperswarm to find other peers that are online and download any updates.
+When a new hypercore is given to the seeding server (eg via an http request), we create a local copy of the hypercore. We join a topic (the hypercores discovery key) in the hyperswarm to find other peers that are online and download any updates.
 
 Finally we store the new hypercores key in a key/value store (Hyperbee).
 
-During startup, all keys in the key/value store and fetched so we can restart the process of monitoring all the hypercores we are responsible for tracking.
-
-## todo
-
-* A way to remove a hypercore that no longer should be seeded
-* A way to drop seeding of hypercores that are empty for a long time, or not used for a long time
-* Make the startup process a little more efficient, as there are a lot of blocking steps that will take forever to complete if we are tracking 100,000's of hypercores.
+During startup, all keys in the key/value store are fetched so we can restart the process of monitoring all the hypercores we are responsible for tracking.

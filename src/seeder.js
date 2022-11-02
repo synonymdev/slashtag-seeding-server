@@ -11,9 +11,18 @@ export default class Seeder {
         this.store = null
         this.swarm = null
         this.db = null
+        this.connections = {}
         this.pendingFlush = null
         this.emptyLifespan = ms(config.get('store.emptyLifespan'))
         this.fullLifespan = ms(config.get('store.fullLifespan'))
+
+        // Some stats
+        this.startupTime = Date.now()
+        this.requests = 0
+        this.itemsSeeded = 0
+        this.connectionsDetected = 0
+        this.topicsDetected = 0
+        this.blocksDownloaded = 0
     }
 
     /**
@@ -25,11 +34,12 @@ export default class Seeder {
         await this.store.ready()
 
         // start a swarm
-        this.connections = {}
         this.swarm = new Hyperswarm()
         this.swarm.on('connection', (connection, peerInfo) => {
             // track peer connections so we can disconnect later
+            this.connectionsDetected += 1
             peerInfo.topics.forEach((topic) => {
+                this.topicsDetected += 1
                 this.connections[topic.toString('hex')] = connection
                 logger.info(`tracking connection on topic ${topic.toString('hex')}`)
             })
@@ -49,8 +59,10 @@ export default class Seeder {
         // monitor historical requests
         this._seedExistingItems()
 
-        // log the status of things from time to time
-        setInterval(() => this.logStatus(), 1000 * 60 * 10)
+        // log the status of things from time to time 
+        // (every few minutes, plus once shortly after starting)
+        setInterval(() => this.logStatus(), 1000 * 60 * 15)
+        setTimeout(() => this.logStatus(), 1000 * 60 * 2)
     }
 
     /**
@@ -66,7 +78,14 @@ export default class Seeder {
             }
         }
 
-        logger.info(`Seeding on ${counts.size} topics...`)
+        logger.info(`Uptime: ${Math.ceil((Date.now() - this.startupTime) / 1000 / 60)} minutes`)
+        logger.info(`Peers: ${this.swarm.peers.size}`)
+        logger.info(`Unique Topics with all peers: ${counts.size}`)
+        logger.info(`Requests to start seeding: ${this.requests}`)
+        logger.info(`Items seeding started on: ${this.itemsSeeded}`)
+        logger.info(`Connections with peers: ${this.connectionsDetected}`)
+        logger.info(`Topics detected with peers: ${this.topicsDetected}`)
+        logger.info(`Blocks downloaded: ${this.blocksDownloaded}`)
     }
 
     /**
@@ -74,6 +93,7 @@ export default class Seeder {
      * @param {*} key - the public key of the hypercore (Buffer)
      */
     async registerHypercore(key) {
+        this.requests += 1
         const keyStr = this._fmtKey(key)
         logger.info(`Registering hypercore with key ${keyStr}`)
         if (!this.store || !this.swarm) {
@@ -155,10 +175,11 @@ export default class Seeder {
      * @param {*} key public key of the hypercore to seed
      */
     async _beginSeeding(key) {
+        // count the attempt
+        this.itemsSeeded += 1
+
         // create a core in the store from a known key
         const keyStr = this._fmtKey(key)
-        logger.debug(`Begin seeding hypercore ${keyStr}`)
-
         const core = this.store.get({ key })
         await core.ready()
 
@@ -167,11 +188,11 @@ export default class Seeder {
 
         // join the core's topic
         this.swarm.join(core.discoveryKey)
-        logger.debug(`Tracking hypercore ${keyStr}. Length: ${core.length}`)
+        logger.debug(`${keyStr}: Tracking hypercore of length: ${core.length}`)
 
         // Do we care about this item any more?
         if (await this._emptyAndOld(key, core.length)) {
-            logger.info(`${keyStr} is still empty for more than ${this.emptyLifespan}ms. removed.`)
+            logger.info(`${keyStr}: still empty for more than ${this.emptyLifespan}ms. dropping.`)
             this._dropItem(key, core.discoveryKey)
 
             return
@@ -179,7 +200,7 @@ export default class Seeder {
 
         // items that have not been updated for a long long time can also be dropped
         if (await this._hasBeenAbandoned(key, core.discoveryKey)) {
-            logger.info(`${keyStr} is not been updated for over ${this.fullLifespan}ms. removed.`)
+            logger.info(`${keyStr}: not been updated for over ${this.fullLifespan}ms. dropping.`)
             this._dropItem(key, core.discoveryKey)
             return
         }
@@ -187,11 +208,10 @@ export default class Seeder {
         // Now we can download the whole thing
         core.download({ start: 0, end: -1 });
         core.on('download', async (index) => {
-            logger.debug(`${keyStr} downloaded block ${index}`);
+            this.blocksDownloaded += 1
             if (await this._getValue(key) !== null) {
                 await this._putValue(key, core.length)
             } else {
-                logger.debug('No longer tracked')
                 core.close()
             }
         });
