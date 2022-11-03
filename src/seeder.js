@@ -11,7 +11,6 @@ export default class Seeder {
         this.store = null
         this.swarm = null
         this.db = null
-        this.connections = {}
         this.pendingFlush = null
         this.emptyLifespan = ms(config.get('store.emptyLifespan'))
         this.fullLifespan = ms(config.get('store.fullLifespan'))
@@ -21,8 +20,6 @@ export default class Seeder {
         this.requests = 0
         this.itemsSeeded = 0
         this.connectionsDetected = 0
-        this.topicsDetected = 0
-        this.blocksDownloaded = 0
     }
 
     /**
@@ -37,12 +34,8 @@ export default class Seeder {
         this.swarm = new Hyperswarm()
         this.swarm.on('connection', (connection, peerInfo) => {
             // track peer connections so we can disconnect later
+            logger.info(`Connection from peer detected: ${peerInfo.publicKey.toString('hex')}`)
             this.connectionsDetected += 1
-            peerInfo.topics.forEach((topic) => {
-                this.topicsDetected += 1
-                this.connections[topic.toString('hex')] = connection
-                logger.info(`tracking connection on topic ${topic.toString('hex')}`)
-            })
 
             // replace any cores we have in common
             this.store.replicate(connection)
@@ -84,8 +77,6 @@ export default class Seeder {
         logger.info(`Requests to start seeding: ${this.requests}`)
         logger.info(`Items seeding started on: ${this.itemsSeeded}`)
         logger.info(`Connections with peers: ${this.connectionsDetected}`)
-        logger.info(`Topics detected with peers: ${this.topicsDetected}`)
-        logger.info(`Blocks downloaded: ${this.blocksDownloaded}`)
     }
 
     /**
@@ -141,11 +132,7 @@ export default class Seeder {
         await core.ready()
 
         // try and end any active connection with a peer for this hypercore
-        const topic = core.discoveryKey.toString('hex')
-        if (this.connections[topic]) {
-            this.connections[topic].end()
-            this.connections[topic] = undefined
-        }
+        this.swarm.leave(core.discoveryKey)
 
         // close the core
         await core.close()
@@ -157,7 +144,7 @@ export default class Seeder {
     /**
      * Find all the items in the DB and start seeding them again
      */
-    async _seedExistingItems() {
+    _seedExistingItems() {
         const keys = []
         const stream = this.db.createReadStream()
         stream.on('data', (data) => keys.push(data.key))
@@ -207,14 +194,6 @@ export default class Seeder {
 
         // Now we can download the whole thing
         core.download({ start: 0, end: -1 });
-        core.on('download', async (index) => {
-            this.blocksDownloaded += 1
-            if (await this._getValue(key) !== null) {
-                await this._putValue(key, core.length)
-            } else {
-                core.close()
-            }
-        });
     }
 
     /**
