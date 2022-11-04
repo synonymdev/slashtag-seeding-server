@@ -30,8 +30,15 @@ export default class Seeder {
         this.store = new Corestore(config.get('store.path'))
         await this.store.ready()
 
+        // Do we have a seed defined for the hyperswarm
+        const opts = {}
+        const seed = config.get('hyperswarm.seed')
+        if (seed !== '') {
+            opts.seed = Buffer.from(seed, 'hex')
+        }
+
         // start a swarm
-        this.swarm = new Hyperswarm()
+        this.swarm = new Hyperswarm(opts)
         this.swarm.on('connection', (connection, peerInfo) => {
             // track peer connections so we can disconnect later
             logger.info(`Connection from peer detected: ${peerInfo.publicKey.toString('hex')}`)
