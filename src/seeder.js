@@ -33,7 +33,7 @@ export default class Seeder {
         // Do we have a seed defined for the hyperswarm
         const opts = {}
         const seed = config.get('hyperswarm.seed')
-        if (seed !== '') {
+        if (typeof seed === 'string' && seed.length === 64) {
             opts.seed = Buffer.from(seed, 'hex')
         }
 
