@@ -30,8 +30,15 @@ export default class Seeder {
         this.store = new Corestore(config.get('store.path'))
         await this.store.ready()
 
+        // Do we have a seed defined for the hyperswarm
+        const opts = {}
+        const seed = config.get('hyperswarm.seed')
+        if (typeof seed === 'string' && seed.length === 64) {
+            opts.seed = Buffer.from(seed, 'hex')
+        }
+
         // start a swarm
-        this.swarm = new Hyperswarm()
+        this.swarm = new Hyperswarm(opts)
         this.swarm.on('connection', (connection, peerInfo) => {
             // track peer connections so we can disconnect later
             logger.info(`Connection from peer detected: ${peerInfo.publicKey.toString('hex')}`)
@@ -174,7 +181,7 @@ export default class Seeder {
         await this._putValue(key, core.length)
 
         // join the core's topic
-        this.swarm.join(core.discoveryKey)
+        this.swarm.join(core.discoveryKey, { client: false, server: true })
         logger.debug(`${keyStr}: Tracking hypercore of length: ${core.length}`)
 
         // Do we care about this item any more?
