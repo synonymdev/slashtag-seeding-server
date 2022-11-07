@@ -181,7 +181,7 @@ export default class Seeder {
         await this._putValue(key, core.length)
 
         // join the core's topic
-        this.swarm.join(core.discoveryKey)
+        this.swarm.join(core.discoveryKey, { client: false, server: true })
         logger.debug(`${keyStr}: Tracking hypercore of length: ${core.length}`)
 
         // Do we care about this item any more?
