@@ -45,7 +45,8 @@ export default class Seeder {
             this.connectionsDetected += 1
 
             // replace any cores we have in common
-            this.store.replicate(connection)
+            const stream = this.store.replicate(connection)
+            stream.on('error', (err) => logger.error(err))
         })
 
         // set up the key value DB
