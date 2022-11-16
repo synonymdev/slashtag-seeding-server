@@ -204,7 +204,7 @@ export default class Seeder {
         core.download({ start: 0, end: -1 });
         core.on('download', async (index) => {
             await this._putValue(key, core.length)
-            logger.debug(`${keyStr} downloaded block ${index}`);
+            logger.debug(`${keyStr} Len: ${core.length} block: ${index}`);
         });
 
     }
