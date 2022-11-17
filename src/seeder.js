@@ -45,7 +45,8 @@ export default class Seeder {
             this.connectionsDetected += 1
 
             // replace any cores we have in common
-            this.store.replicate(connection)
+            const stream = this.store.replicate(connection)
+            stream.on('error', (err) => logger.error(err))
         })
 
         // set up the key value DB
@@ -180,10 +181,6 @@ export default class Seeder {
         // register the item in the DB so we can load it again next time
         await this._putValue(key, core.length)
 
-        // join the core's topic
-        this.swarm.join(core.discoveryKey, { client: false, server: true })
-        logger.debug(`${keyStr}: Tracking hypercore of length: ${core.length}`)
-
         // Do we care about this item any more?
         if (await this._emptyAndOld(key, core.length)) {
             logger.info(`${keyStr}: still empty for more than ${this.emptyLifespan}ms. dropping.`)
@@ -199,8 +196,17 @@ export default class Seeder {
             return
         }
 
+        // join the core's topic
+        this.swarm.join(core.discoveryKey, { client: false, server: true })
+        logger.debug(`${keyStr}: Tracking hypercore of length: ${core.length}`)
+
         // Now we can download the whole thing
         core.download({ start: 0, end: -1 });
+        core.on('download', async (index) => {
+            await this._putValue(key, core.length)
+            logger.debug(`${keyStr} Len: ${core.length} block: ${index}`);
+        });
+
     }
 
     /**
