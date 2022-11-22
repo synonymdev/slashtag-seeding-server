@@ -49,6 +49,18 @@ export default class Seeder {
             stream.on('error', (err) => logger.error(err))
         })
 
+        // Determine the master topic to join
+        const topicKey = config.get('hyperswarm.topicKey')
+        if (typeof topicKey !== 'string' || topicKey.length !== 64) {
+            throw new Error('Must set the topic that the hyperswarm will listen on. See hyperswarm.topicKey in config')
+        }
+
+        // Join the swarms master topic
+        const topic = Buffer.from(topicKey, 'hex')
+        this.swarm.join(topic, { server: true, client: false }).flushed().then(()=>{
+            logger.info(`Hyperswarm listening on main topic: ${topicKey}`)
+        })
+
         // set up the key value DB
         const feed = this.store.get({ name: config.get('store.dbName') })
         this.db = new Hyperbee(feed, {
@@ -70,21 +82,11 @@ export default class Seeder {
      * Report on the number of seeding topics are in use
      */
     logStatus() {
-        const counts = new Map()
-        for (let peerInfo of this.swarm.peers.values()) {
-            for (let topic of peerInfo.topics) {
-                const t = topic.toString('hex')
-                const current = counts.get(t) || 0
-                counts.set(t, current + 1)
-            }
-        }
-
         logger.info(`Uptime: ${Math.ceil((Date.now() - this.startupTime) / 1000 / 60)} minutes`)
-        logger.info(`Peers: ${this.swarm.peers.size}`)
-        logger.info(`Unique Topics with all peers: ${counts.size}`)
+        logger.info(`Current Peers: ${this.swarm.peers.size}`)
+        logger.info(`Connections opened with peers: ${this.connectionsDetected}`)
         logger.info(`Requests to start seeding: ${this.requests}`)
-        logger.info(`Items seeding started on: ${this.itemsSeeded}`)
-        logger.info(`Connections with peers: ${this.connectionsDetected}`)
+        logger.info(`Items being seeded: ${this.itemsSeeded}`)
     }
 
     /**
@@ -181,24 +183,12 @@ export default class Seeder {
         // register the item in the DB so we can load it again next time
         await this._putValue(key, core.length)
 
-        // Do we care about this item any more?
-        if (await this._emptyAndOld(key, core.length)) {
-            logger.info(`${keyStr}: still empty for more than ${this.emptyLifespan}ms. dropping.`)
-            this._dropItem(key, core.discoveryKey)
-
-            return
-        }
-
-        // items that have not been updated for a long long time can also be dropped
-        if (await this._hasBeenAbandoned(key, core.discoveryKey)) {
-            logger.info(`${keyStr}: not been updated for over ${this.fullLifespan}ms. dropping.`)
-            this._dropItem(key, core.discoveryKey)
-            return
-        }
-
-        // join the core's topic
-        this.swarm.join(core.discoveryKey, { client: false, server: true })
-        logger.debug(`${keyStr}: Tracking hypercore of length: ${core.length}`)
+        // join the core's topic (Deprecated - remove this when Bitkit is updated)
+        this.swarm.join(core.discoveryKey, { server: true, client: false }).flushed().then(()=>{
+            this.itemsAnnounced += 1
+            logger.info(`${keyStr}: announced (flushed). total ${this.itemsAnnounced}`)
+        })
+        logger.debug(`${keyStr}: joined hyperswarm. current length: ${core.length}`)
 
         // Now we can download the whole thing
         core.download({ start: 0, end: -1 });
@@ -207,74 +197,6 @@ export default class Seeder {
             logger.debug(`${keyStr} Len: ${core.length} block: ${index}`);
         });
 
-    }
-
-    /**
-     * Start the hyperswarm flush process to ensure everything is fully announced on the DHT
-     * Takes care to only be doing this once at a time
-     * When the flush completes, the callback will be triggered (used to stop the cores trying to update)
-     * @param {*} cb
-     */
-    async _flushIfNeeded(cb) {
-        if (this.pendingFlush !== null) {
-            this.pendingFlush.then(cb, cb)
-        } else {
-            const cleanup = () => this.pendingFlush = null
-            this.pendingFlush = this.swarm.flush()
-                .then(cleanup, cleanup)
-                .then(cb, cb)
-        }
-    }
-
-    /**
-     * Tries to decide if the hypercore with the given key has been abandoned
-     * This is the case if it has been > `fullLifespan` ms since the last update to the core
-     * @param {*} key
-     * @returns true if it has been abandoned, false if not
-     */
-    async _hasBeenAbandoned(key) {
-        // Do we care about this item any more?
-        // It's empty - see if we have been watching it for a while
-        const item = await this._getValue(key)
-        if (item === null) {
-            return false
-        }
-
-        const now = Date.now()
-        if ((now - item.lastUpdated) < this.fullLifespan) {
-            return false
-        }
-
-        // Drop this item then
-        return true
-    }
-
-    /**
-     * Is the hypercore still empty and older than some threshold
-     * If we are given an empty hypercore that is never updated, we want to discard it eventually
-     * @param {*} key
-     * @param {*} length
-     * @returns true if the hypercore is still empty and has been for a while, false if not
-     */
-    async _emptyAndOld(key, length) {
-        if (length > 0) {
-            return false
-        }
-
-        // Do we care about this item any more?
-        // It's empty - see if we have been watching it for a while
-        const item = await this._getValue(key)
-        if (item === null) {
-            return false
-        }
-
-        const now = Date.now()
-        if ((now - item.lastUpdated) < this.emptyLifespan) {
-            return false
-        }
-
-        // Yes, it is empty and old. Remove it from the DB
-        return true
     }
 
     /**

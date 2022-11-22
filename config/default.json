@@ -1,6 +1,7 @@
 {
     "hyperswarm": {
-        "seed": ""
+        "seed": "",
+        "topicKey": ""
     },
     "http": {
         "logger": false,
