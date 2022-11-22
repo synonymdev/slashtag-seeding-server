@@ -26,7 +26,9 @@ swarm.on('connection', (conn, peerInfo) => {
     store.replicate(conn)
 })
 
-swarm.join(core.discoveryKey)
+const topicKey = config.get('hyperswarm.topicKey')
+const topic = Buffer.from(topicKey, 'hex')
+swarm.join(topic)
 
 // a second core
 const other = store.get({ name: config.get('testClient.coreName') + 'other' })
