@@ -5,7 +5,6 @@ import Hyperbee from 'hyperbee'
 import ms from './time-to-milliseconds.js'
 import logger from './logger.js'
 
-
 export default class Seeder {
     constructor() {
         this.store = null
@@ -52,27 +51,32 @@ export default class Seeder {
         // Determine the master topic to join
         const topicKey = config.get('hyperswarm.topicKey')
         if (typeof topicKey !== 'string' || topicKey.length !== 64) {
-            throw new Error('Must set the topic that the hyperswarm will listen on. See hyperswarm.topicKey in config')
+            throw new Error(
+                'Must set the topic that the hyperswarm will listen on. See hyperswarm.topicKey in config'
+            )
         }
 
         // Join the swarms master topic
         const topic = Buffer.from(topicKey, 'hex')
-        this.swarm.join(topic, { server: true, client: false }).flushed().then(()=>{
-            logger.info(`Hyperswarm listening on main topic: ${topicKey}`)
-        })
+        this.swarm
+            .join(topic, { server: true, client: false })
+            .flushed()
+            .then(() => {
+                logger.info(`Hyperswarm joined on main topic: ${topicKey}`)
+            })
 
         // set up the key value DB
         const feed = this.store.get({ name: config.get('store.dbName') })
         this.db = new Hyperbee(feed, {
             keyEncoding: 'binary',
-            valueEncoding: 'utf-8'
+            valueEncoding: 'utf-8',
         })
         await this.db.ready()
 
         // monitor historical requests
         this._seedExistingItems()
 
-        // log the status of things from time to time 
+        // log the status of things from time to time
         // (every few minutes, plus once shortly after starting)
         setInterval(() => this.logStatus(), 1000 * 60 * 15)
         setTimeout(() => this.logStatus(), 1000 * 60 * 2)
@@ -114,8 +118,8 @@ export default class Seeder {
 
     /**
      * Find the state of the hypercore with the given key
-     * @param {*} key 
-     * @returns 
+     * @param {*} key
+     * @returns
      */
     async getHypercoreStatus(key) {
         return this._getValue(key)
@@ -123,8 +127,8 @@ export default class Seeder {
 
     /**
      * Stop tracking a hypercore
-     * @param {*} key 
-     * @returns 
+     * @param {*} key
+     * @returns
      */
     async removeHypercore(key) {
         const keyStr = this._fmtKey(key)
@@ -184,19 +188,14 @@ export default class Seeder {
         await this._putValue(key, core.length)
 
         // join the core's topic (Deprecated - remove this when Bitkit is updated)
-        this.swarm.join(core.discoveryKey, { server: true, client: false }).flushed().then(()=>{
-            this.itemsAnnounced += 1
-            logger.info(`${keyStr}: announced (flushed). total ${this.itemsAnnounced}`)
-        })
-        logger.debug(`${keyStr}: joined hyperswarm. current length: ${core.length}`)
+        logger.debug(`${keyStr}: Started seeding. current length: ${core.length}`)
 
         // Now we can download the whole thing
-        core.download({ start: 0, end: -1 });
+        core.download({ start: 0, end: -1 })
         core.on('download', async (index) => {
             await this._putValue(key, core.length)
-            logger.debug(`${keyStr} Len: ${core.length} block: ${index}`);
-        });
-
+            logger.debug(`${keyStr} Len: ${core.length} block: ${index}`)
+        })
     }
 
     /**
@@ -239,13 +238,13 @@ export default class Seeder {
         const cas = (prev, next) => {
             const p = { length: 0, ...JSON.parse(prev.value) }
             const n = { length: 0, ...JSON.parse(next.value) }
-            return updateWhenSameLength ? (n.length >= p.length) : (n.length > p.length)
+            return updateWhenSameLength ? n.length >= p.length : n.length > p.length
         }
 
         const value = {
             type: 'hypercore',
             length,
-            lastUpdated: Date.now()
+            lastUpdated: Date.now(),
         }
 
         return this.db.put(key, JSON.stringify(value), { cas })
