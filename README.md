@@ -38,6 +38,7 @@ A 200 response will contain the following
 {
     key: <public key>,
     length: <current length of the hypercore on the seeding server>,
+    contiguousLength: <Number of blocks contiguously available starting from the first block of this core>,
     lastUpdated: <when the seeding server last saw a change (ms timestamp)>,
 }
 ```
