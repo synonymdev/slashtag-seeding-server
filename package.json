@@ -10,15 +10,15 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@synonymdev/slashtags-rpc": "^1.0.0-alpha.1",
-    "@synonymdev/slashtags-sdk": "^1.0.0-alpha.18",
+    "@synonymdev/slashtags-rpc": "^1.0.0-alpha.2",
+    "@synonymdev/slashtags-sdk": "^1.0.0-alpha.36",
     "compact-encoding": "^2.11.0",
-    "config": "^3.3.7",
-    "corestore": "^6.0.3",
-    "fastify": "^4.2.0",
-    "hyperbee": "^2.0.0",
-    "hypercore": "^10.2.0",
-    "hyperswarm": "^4.2.0"
+    "config": "^3.3.9",
+    "corestore": "^6.4.1",
+    "fastify": "^4.11.0",
+    "hyperbee": "^2.3.0",
+    "hypercore": "^10.6.1",
+    "hyperswarm": "^4.3.6"
   },
   "devDependencies": {
     "mocha": "^10.0.0",
