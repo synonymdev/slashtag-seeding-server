@@ -78,8 +78,8 @@ export default class Seeder {
 
         // log the status of things from time to time
         // (every few minutes, plus once shortly after starting)
-        setInterval(() => this.logStatus(), 1000 * 60 * 15)
-        setTimeout(() => this.logStatus(), 1000 * 60 * 2)
+        this.interval = setInterval(() => this.logStatus(), 1000 * 60 * 15)
+        this.timeout = setTimeout(() => this.logStatus(), 1000 * 60 * 2)
     }
 
     /**

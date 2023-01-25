@@ -1,7 +1,7 @@
 {
     "hyperswarm": {
-        "seed": "",
-        "topicKey": ""
+        "seed": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "topicKey": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
     },
     "http": {
         "logger": false,
@@ -17,7 +17,7 @@
         "fullLifespan": "12w"
     },
     "slashtags": {
-        "primaryKey": ""
+        "primaryKey": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
     },
     "testClient": {
         "path": "./data/client/",
