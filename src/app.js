@@ -1,18 +1,34 @@
 import config from 'config'
 import Fastify from 'fastify'
+import fastifyWS from '@fastify/websocket'
 import logger from './logger.js'
+import { createWebSocketStream } from 'ws'
 
 export default class App {
+    /**
+     * @param {import('./seeder.js').default} seeder
+     */
     constructor(seeder) {
         this.server = Fastify({ logger: config.get('http.logger') })
         this.seeder = seeder
+
+        this.port = config.get('http.port')
+
+        // Register websocket
+        this.server.register(fastifyWS)
+        this.server.register(async function (fastify) {
+          fastify.get('/', { websocket: true }, (connection) => {
+            const s = seeder.store.replicate(false)
+            s.pipe(createWebSocketStream(connection.socket)).pipe(s)
+          })
+        })
     }
 
     async start() {
         try {
             await this.defineRoutes()
-            await this.server.listen({ port: config.get('http.port') })
-            logger.info(`HTTP server listening on port ${config.get('http.port')}`)
+            await this.server.listen({ port: this.port })
+            logger.info(`HTTP server listening on port ${this.port}`)
         } catch (err) {
             this.server.log.error(err)
             process.exit(1)
