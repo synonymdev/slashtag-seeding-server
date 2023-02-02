@@ -16,7 +16,7 @@
     "@synonymdev/slashtags-sdk": "^1.0.0-alpha.18",
     "compact-encoding": "^2.11.0",
     "config": "^3.3.7",
-    "corestore": "^6.4.2",
+    "corestore": "github:Nazeh/corestore#passive-replication",
     "fastify": "^4.2.0",
     "hyperbee": "^2.0.0",
     "hyperswarm": "^4.3.6"
