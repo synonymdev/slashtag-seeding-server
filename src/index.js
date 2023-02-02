@@ -4,7 +4,6 @@ import SlashServer from './slashtag-server.js'
 
 // getting started
 const seeder = new Seeder()
-await seeder.start()
 
 // Create the HTTP server app
 const app = new App(seeder)

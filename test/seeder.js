@@ -7,38 +7,42 @@ test("It saves the right data to the keystore", async (t) => {
     // Setup
     const seeder = new Seeder({storage: RAM})
 
+    let expected = {};
+
     seeder.db = { 
         put: (key, value) => {
             t.is(key, 'theKey')
-
-            const expected = {
-                type: 'hypercore',
-                length: 42,
-                lastUpdated: Date.now()
-            };
-
             t.is(value, JSON.stringify(expected))
         } 
     }
 
     // Call it
+    expected = {
+        type: 'hypercore',
+        length: 42,
+        lastUpdated: Date.now()
+    };
     await seeder._putValue('theKey', 42);
+
+    await seeder.close()
 })
 
 test("It returns null when no key is found", async (t) => {
     // Setup
-    const seeder = new Seeder()
+    const seeder = new Seeder({storage: RAM})
     seeder.db = { get: async () => null }
 
     // Call it
     const result = await seeder._getValue('theKey', 42)
     t.is(result, null);
+
+    await seeder.close()
 });
 
 test("It returns the decoded value when the key is found", async (t) => {
     // Setup
     const expected = { test: 42, value: "thing" }
-    const seeder = new Seeder()
+    const seeder = new Seeder({storage: RAM})
     seeder.db = {
         get: async () => ({ key: 'test', value: JSON.stringify(expected) })
     }
@@ -46,12 +50,14 @@ test("It returns the decoded value when the key is found", async (t) => {
     // Call it
     const result = await seeder._getValue('theKey', 42)
     t.alike(result, expected);
+
+    await seeder.close()
 });
 
 // _emptyAndOld is no longer in the seeder
 test.skip("It sees empty keys as empty and old", async (t) => {
     // Setup
-    const seeder = new Seeder()
+    const seeder = new Seeder({storage: RAM})
     seeder.db = { get: async () => null }
 
     // try all the cases that will count as empty and old
@@ -84,13 +90,15 @@ test.skip("It sees empty keys as empty and old", async (t) => {
 
     // empty, has an entry, last updated a while ago
     t.is(await seeder._emptyAndOld('theKey', 0), true)
+
+    await seeder.close()
 });
 
 
 // _emptyAndOld is no longer in the seeder
 test.skip("It sees empty keys as empty and old", async (t) => {
     // Setup
-    const seeder = new Seeder()
+    const seeder = new Seeder({storage: RAM})
     seeder.db = { get: async () => null }
 
     // try all the cases that will count as empty and old
@@ -123,13 +131,15 @@ test.skip("It sees empty keys as empty and old", async (t) => {
 
     // empty, has an entry, last updated a while ago
     t.is(await seeder._emptyAndOld('theKey', 0), true)
+
+    await seeder.close()
 });
 
 
 // _hasBeenAbandoned is no longer in the seeder
 test.skip("It can detected Abandoned items", async (t) => {
     // Setup
-    const seeder = new Seeder()
+    const seeder = new Seeder({storage: RAM})
     seeder.db = { get: async () => null }
 
     // item does not exist
@@ -151,12 +161,14 @@ test.skip("It can detected Abandoned items", async (t) => {
 
     //  last updated recently
     t.is(await seeder._hasBeenAbandoned('theKey'), true)
+
+    await seeder.close()
 });
 
-// _alreadyExists is no loger in the seedr
+// _alreadyExists is no loger in the seeder
 test.skip("It can decide if a key already exists", async (t) => {
     // Setup
-    const seeder = new Seeder()
+    const seeder = new Seeder({storage: RAM})
     seeder.db = { get: async () => null }
 
     // item does not exist
@@ -169,4 +181,6 @@ test.skip("It can decide if a key already exists", async (t) => {
 
     //  last updated recently
     t.is(await seeder._alreadyExists('theKey'), true)
+
+    await seeder.close()
 });

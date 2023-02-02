@@ -26,6 +26,7 @@ export default class App {
 
     async start() {
         try {
+            await this.seeder.ready()
             await this.defineRoutes()
             await this.server.listen({ port: this.port })
             logger.info(`HTTP server listening on port ${this.port}`)
