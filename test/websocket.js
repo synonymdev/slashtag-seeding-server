@@ -7,9 +7,7 @@ import Seeder from "../src/seeder.js"
 import App from "../src/app.js"
 
 test("can replicate over a websocket", async (t) => {
-  const seeder = new Seeder();
-  // TODO: move the construction of corestore and hyperswarm to the constructor function
-  await seeder.start()
+  const seeder = new Seeder({storage: RAM});
 
   const app = new App(seeder);
   await app.start()
@@ -40,8 +38,5 @@ test("can replicate over a websocket", async (t) => {
 
   await app.server?.close()
 
-  // TODO: add seeder.close() funciton
-  await seeder.swarm.destroy()
-  clearInterval(seeder.interval)
-  clearTimeout(seeder.timeout)
+  await seeder.close()
 })
