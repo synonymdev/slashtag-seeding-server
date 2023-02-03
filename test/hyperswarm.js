@@ -3,22 +3,39 @@ import RAM from 'random-access-memory'
 import Corestore from 'corestore';
 import Hyperswarm from 'hyperswarm'
 import createTestnet from '@hyperswarm/testnet'
+import {tmpdir} from 'os'
 
 import Seeder from "../src/seeder.js"
 
 test("can replicate over a seeders topic", async (t) => {
   const testnet = await createTestnet(3, t.teardown)
 
-  const seeder = new Seeder({bootstrap: testnet.bootstrap, storage: RAM});
+  const storage = tmpdir() + "/" + Math.random().toString(16).slice(2)
+
+  let seeder = new Seeder({bootstrap: testnet.bootstrap, storage});
   await seeder.ready()
 
   // Mock hypercore
   const core = seeder.store.get({ name : "foo" })
   await core.append(['foo', 'bar'])
+  await core.close()
+
+  // Close everything and reopen to prove peristence
+  await seeder.close()
+  seeder = new Seeder({bootstrap: testnet.bootstrap, storage});
+  await seeder.ready()
+
+  // Open 10 unrequested hypercores that shouldn't be replicated
+  for (let i=0; i <= 10; i++) {
+    const core = seeder.store.get({ name : "foo" + i })
+    await core.append(['foo'])
+  }
 
   // Client side
   const swarm = new Hyperswarm(testnet)
-  const corestore = new Corestore(RAM)
+
+  const discoveryKeys = new Set()
+  const corestore = new Corestore(RAM, {_ondiscoverykey: discoveryKeys.add.bind(discoveryKeys)})
 
   swarm.on("connection", (conn) => {
     corestore.replicate(conn)
@@ -31,9 +48,10 @@ test("can replicate over a seeders topic", async (t) => {
   const readable = corestore.get({ key: core.key })
   await readable.update()
 
-  console.log(readable)
   t.is(readable.length, 2)
   t.is(readable.length, core.length)
+
+  t.is(discoveryKeys.size, 0, "shouldn't recieve any unrequested replication")
 
   await seeder.close()
   await swarm.destroy()

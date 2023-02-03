@@ -13,7 +13,7 @@ export default class Seeder {
      */
     constructor(opts) {
         // Setup Corestore
-        this.store = new Corestore(opts?.storage || config.get('store.path'))
+        this.store = new Corestore(opts?.storage || config.get('store.path'), { _autoReplicate: false })
 
         // Setup Hyperswarm
         // Use a seed (if configured) to generate the same Hyperswarm DHT keyPair 
