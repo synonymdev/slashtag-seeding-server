@@ -1,4 +1,5 @@
 import config from 'config'
+import HyperswarmCluster from '@synonymdev/hyperswarm-cluster'
 import Hyperswarm from 'hyperswarm'
 import Corestore from 'corestore'
 import Hyperbee from 'hyperbee'
@@ -40,6 +41,10 @@ export default class Seeder {
             )
         }
         this.topic = Buffer.from(this.topicHex, 'hex')
+
+        // Setup cluster for announcing all topics
+        this.cluster = new HyperswarmCluster(opts)
+        this.cluster.on('connection', (conn) => this.store.replicate(conn))
 
         // set up the key value DB
         const feed = this.store.get({ name: config.get('store.dbName') })
@@ -168,17 +173,14 @@ export default class Seeder {
     /**
      * Find all the items in the DB and start seeding them again
      */
-    _seedExistingItems() {
-        const keys = []
-        const stream = this.db.createReadStream()
-        stream.on('data', (data) => keys.push(data.key))
-        stream.on('end', async () => {
-            // add them one at a time so we don't overload everything
-            logger.info(`Starting to seed ${keys.length} existing hypercores`)
-            for (let i = 0; i < keys.length; i += 1) {
-                await this._beginSeeding(keys[i])
+    async _seedExistingItems() {
+        await this.db.feed.ready()
+        this.announced = 0
+        try {
+            for await (let {key} of this.db.createReadStream()) {
+                this._beginSeeding(key)
             }
-        })
+        } catch {}
     }
 
     /**
@@ -196,6 +198,10 @@ export default class Seeder {
 
         // register the item in the DB so we can load it again next time
         await this._putValue(key, core.length)
+
+        this.cluster.join(core.discoveryKey, {server: true, client: false})
+            .flushed()
+            .then(() => logger.info(`Announced core ${keyStr} - total annoounced ${this.announced++ + 1}`))
 
         // join the core's topic (Deprecated - remove this when Bitkit is updated)
         logger.debug(`${keyStr}: Started seeding. current length: ${core.length}`)
