@@ -130,6 +130,7 @@ export default class App {
                             key: { type: 'string' },
                             length: { type: 'integer' },
                             lastUpdated: { type: 'integer' },
+                            contiguousLength: { type: 'integer' }
                         }
                     }
                 }
@@ -153,6 +154,7 @@ export default class App {
                 return {
                     key: request.params.key,
                     length: status.length,
+                    contiguousLength: status.contiguousLength,
                     lastUpdated: status.lastUpdated,
                 }
             }
