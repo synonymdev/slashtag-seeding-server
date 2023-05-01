@@ -1,8 +1,6 @@
 const config = require('config')
 const Fastify = require('fastify')
-const fastifyWS = require('@fastify/websocket')
 const logger = require('./logger.js')
-const { createWebSocketStream } = require('ws')
 
 class App {
     /**
@@ -13,15 +11,6 @@ class App {
         this.seeder = seeder
 
         this.port = config.get('http.port')
-
-        // Register websocket
-        this.server.register(fastifyWS)
-        this.server.register(async function(fastify) {
-            fastify.get('/', { websocket: true }, (connection) => {
-                const s = seeder.store.replicate(false)
-                s.pipe(createWebSocketStream(connection.socket)).pipe(s)
-            })
-        })
     }
 
     async start() {
