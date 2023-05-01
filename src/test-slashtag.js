@@ -1,9 +1,9 @@
-import config from 'config'
-import { SDK } from '@synonymdev/slashtags-sdk'
-import logger from './logger.js'
-import SeedingProtocol from './seeding-protocol.js'
-import Corestore from 'corestore'
-import Hyperswarm from 'hyperswarm'
+const config = require('config')
+const { SDK } = require('@synonymdev/slashtags-sdk')
+const logger = require('./logger.js')
+const SeedingProtocol = require('./seeding-protocol.js')
+const Corestore = require('corestore')
+const Hyperswarm = require('hyperswarm')
 
 // The server will report this when it starts. update this to match your local test server
 const serverSlashtag = 'slash:qybsuau56f3a6i7w3yo54aq66mcia9ix8uixba3fcdiq7hib5dmo'

@@ -1,19 +1,21 @@
-import test from 'brittle'
-import RAM from 'random-access-memory'
-import WebSocket, {createWebSocketStream} from 'ws'
-import Corestore from 'corestore';
+const test = require('brittle')
+const RAM = require('random-access-memory')
+const WebSocket = require('ws')
+const Corestore = require('corestore');
 
-import Seeder from "../src/seeder.js"
-import App from "../src/app.js"
+const { createWebSocketStream } = WebSocket
+
+const Seeder = require("../src/seeder.js")
+const App = require("../src/app.js")
 
 test("can replicate over a websocket", async (t) => {
-  const seeder = new Seeder({storage: RAM});
+  const seeder = new Seeder({ storage: RAM });
 
   const app = new App(seeder);
   await app.start()
 
   // Mock hypercore
-  const core = app.seeder.store.get({ name : "foo" })
+  const core = app.seeder.store.get({ name: "foo" })
   await core.append(['foo', 'bar'])
 
   // Client side

@@ -1,10 +1,10 @@
-import config from 'config'
-import Fastify from 'fastify'
-import fastifyWS from '@fastify/websocket'
-import logger from './logger.js'
-import { createWebSocketStream } from 'ws'
+const config = require('config')
+const Fastify = require('fastify')
+const fastifyWS = require('@fastify/websocket')
+const logger = require('./logger.js')
+const { createWebSocketStream } = require('ws')
 
-export default class App {
+class App {
     /**
      * @param {import('./seeder.js').default} seeder
      */
@@ -16,11 +16,11 @@ export default class App {
 
         // Register websocket
         this.server.register(fastifyWS)
-        this.server.register(async function (fastify) {
-          fastify.get('/', { websocket: true }, (connection) => {
-            const s = seeder.store.replicate(false)
-            s.pipe(createWebSocketStream(connection.socket)).pipe(s)
-          })
+        this.server.register(async function(fastify) {
+            fastify.get('/', { websocket: true }, (connection) => {
+                const s = seeder.store.replicate(false)
+                s.pipe(createWebSocketStream(connection.socket)).pipe(s)
+            })
         })
     }
 
@@ -159,3 +159,5 @@ export default class App {
         })
     }
 }
+
+module.exports = App

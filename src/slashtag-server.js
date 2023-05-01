@@ -1,9 +1,9 @@
-import config from 'config'
-import { SDK } from '@synonymdev/slashtags-sdk'
-import logger from './logger.js'
-import SeedingProtocol from './seeding-protocol.js'
+const config = reuire('config')
+const { SDK } = require('@synonymdev/slashtags-sdk')
+const logger = require('./logger.js')
+const SeedingProtocol = require('./seeding-protocol.js')
 
-export default class SlashServer {
+class SlashServer {
     constructor(seeder) {
         this.seedingProtocol = null
         this.seeder = seeder
@@ -65,3 +65,5 @@ export default class SlashServer {
         logger.info('Slashtag server listening')
     }
 }
+
+module.exports = SlashServer 

@@ -1,6 +1,6 @@
-import App from './app.js'
-import Seeder from './seeder.js'
-import SlashServer from './slashtag-server.js'
+const App = require('./app.js')
+const Seeder = require('./seeder.js')
+const SlashServer = require('./slashtag-server.js')
 
 // getting started
 const seeder = new Seeder()

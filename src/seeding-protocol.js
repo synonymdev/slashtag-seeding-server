@@ -1,9 +1,9 @@
-import c from 'compact-encoding'
-import SlashtagsRPC from '@synonymdev/slashtags-rpc';
-import logger from './logger.js'
+const c = require('compact-encoding')
+const SlashtagsRPC = require('@synonymdev/slashtags-rpc');
+const logger = require('./logger.js')
 
 
-export default class SeedingProtocol extends SlashtagsRPC {
+class SeedingProtocol extends SlashtagsRPC {
     constructor(slashtag) {
         super(slashtag)
     }
@@ -64,3 +64,5 @@ export default class SeedingProtocol extends SlashtagsRPC {
         return rpc?.request('seedRemove', hypercorePubKey);
     }
 }
+
+module.exports = SeedingProtocol 

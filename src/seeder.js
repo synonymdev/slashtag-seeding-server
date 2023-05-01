@@ -1,11 +1,11 @@
-import config from 'config'
-import Hyperswarm from 'hyperswarm'
-import Corestore from 'corestore'
-import Hyperbee from 'hyperbee'
-import ms from './time-to-milliseconds.js'
-import logger from './logger.js'
+const config = require('config')
+const Hyperswarm = require('hyperswarm')
+const Corestore = require('corestore')
+const Hyperbee = require('hyperbee')
+const ms = require('./time-to-milliseconds.js')
+const logger = require('./logger.js')
 
-export default class Seeder {
+class Seeder {
     /**
      * @param {object} [opts]
      * @param {Array<{host: string, port: number}>} [opts.bootstrap]
@@ -20,8 +20,8 @@ export default class Seeder {
         let seed;
         try {
             seed = Buffer.from(config.get('hyperswarm.seed'), 'hex')
-        } catch {}
-        this.swarm = new Hyperswarm({...opts, seed})
+        } catch { }
+        this.swarm = new Hyperswarm({ ...opts, seed })
 
         this.swarm.on('connection', (connection, peerInfo) => {
             // track peer connections so we can disconnect later
@@ -72,11 +72,11 @@ export default class Seeder {
     /**
      * Await opening corestore and announcing the seeder on the seeder topic
      */
-    ready () {
+    ready() {
         return this._opening
     }
 
-    async _open () {
+    async _open() {
         // Join the swarms master topic
         await this.swarm.join(this.topic, { server: true, client: false }).flushed()
         logger.info(`Hyperswarm joined on main topic: ${this.topicHex}`)
@@ -87,7 +87,7 @@ export default class Seeder {
     /**
      * Close all resources
      */
-    async close () {
+    async close() {
         await this.ready()
         await this.store.close()
         await this.swarm.destroy()
@@ -269,3 +269,5 @@ export default class Seeder {
         return key.toString('hex').slice(0, 8) + '...'
     }
 }
+
+module.exports = Seeder

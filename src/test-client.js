@@ -1,6 +1,6 @@
-import config from 'config'
-import Hyperswarm from 'hyperswarm'
-import Corestore from 'corestore'
+const config = require('config')
+const Hyperswarm = require('hyperswarm')
+const Corestore = require('corestore')
 
 // the sore...
 const store = new Corestore(config.get('testClient.path'))
