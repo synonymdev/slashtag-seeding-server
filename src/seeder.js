@@ -126,7 +126,17 @@ class Seeder {
      * @returns
      */
     async getHypercoreStatus(key) {
-        return this._getValue(key)
+        const session = this.store.get(key)
+        const info = await session.info()
+        session.close()
+
+        const status = await this._getValue(key)
+        if (!status) return null
+        
+        return {
+            ...info,
+            lastUpdated: status.lastUpdated,
+        }
     }
 
     /**
