@@ -1,45 +1,34 @@
-const config = reuire('config')
-const { SDK } = require('@synonymdev/slashtags-sdk')
 const logger = require('./logger.js')
-const SeedingProtocol = require('./seeding-protocol.js')
+const SeederRPC = require('./seeding-protocol.js')
+const Seeder = require('./seeder.js')
 
+/**
+ * Transport over HyperDHT connections as an alternative to the HTTP server.
+ */
 class SlashServer {
-    constructor(seeder) {
-        this.seedingProtocol = null
-        this.seeder = seeder
-    }
+    /**
+     * @param {object} [opts]
+     * @param {Seeder} [opts.seeder]
+     * @param {Array<{host: string, port: number}>} [opts.bootstrap] bootstrapping nodes for HyperDHT
+     * @param {any} [opts.storage] storage directory for corestore
+     * @param {Uint8Array} [opts.seed] seed for generating the Hyperswarm DHT keyPair
+     * @param {Uint8Array} [opts.topic] seed for generating the Hyperswarm DHT keyPair
+     * @param {string} [opts.dbName] name of the Hyperbee DB
+     */
+    constructor(opts = {}) {
+        this.seeder = opts.seeder || new Seeder(opts)
 
-    async start() {
-        // Pick a primary key, so all our slashtags are the same each time
-        const keyStr = config.get('slashtags.primaryKey')
-        if (keyStr.length !== 64) {
-            throw new Error('slashtags.primaryKey should be defined in the config (expecting 64 character hex string)')
-        }
+        this.rpc = new SeederRPC();
+        this.seeder.swarm.server.on('connection', (stream) => this.rpc.setup(stream))
 
-        // as a buffer
-        const primaryKey = Buffer.from(keyStr, 'hex')
+        this.key = this.seeder.swarm.keyPair.publicKey
 
-        // setup the SDK
-        const options = {
-            persist: false,
-            primaryKey
-        }
-
-        // start the slashtags SDK
-        const sdk = new SDK(options)
-        await sdk.ready()
-
-        // Generate the servers slashtag (as we use a common name and primary key, this should be the same each time)
-        const st = sdk.slashtag('Seeding Server Slashtag');
-        logger.info(`Seeding Server Slashtag - ${st.url}`)
-
-        // Get the seeding protocol to add our hooks
-        this.seedingProtocol = new SeedingProtocol(st)
+        logger.info(`Seeding Server listening on publicKey: ${this.key.toString('hex')}`)
 
         /**
          * Handle any incoming requests for a list of recent backups
          */
-        this.seedingProtocol.on('seedAdd', async (req) => {
+        this.rpc.on('seedAdd', async (req) => {
             try {
                 await this.seeder.registerHypercore(req.key)
             } catch (err) {
@@ -48,21 +37,22 @@ class SlashServer {
                 logger.error(err)
             }
         })
+    }
 
-        this.seedingProtocol.on('seedRemove', async (req) => {
-            try {
-                // disable for now - wait for auth
-                // await this.seeder.removeHypercore(req.key)
-            } catch (err) {
-                // log it
-                logger.error(`seedRemove failed`)
-                logger.error(err)
-            }
-        })
+    /**
+     * Await for the DHT server to start listening on the server's publicKey.
+     * @returns {Promise<void>}
+     */
+    async ready() {
+        return this.seeder.ready()
+    }
 
-        // listen
-        await st.listen()
-        logger.info('Slashtag server listening')
+    /**
+     * Close the server, its seeder instance and destroy the DHT instance.
+     * @returns {Promise<void>}
+     */
+    close() {
+        return this.seeder.close()
     }
 }
 

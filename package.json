@@ -4,12 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node bin.js",
     "test": "brittle test/*"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@fastify/websocket": "^7.1.2",
     "@hyperswarm/testnet": "^3.1.1",
     "@synonymdev/slashtags-rpc": "^1.0.0-alpha.1",
     "@synonymdev/slashtags-sdk": "^1.0.0-alpha.18",

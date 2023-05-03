@@ -16,9 +16,6 @@
         "emptyLifespan": "1d",
         "fullLifespan": "12w"
     },
-    "slashtags": {
-        "primaryKey": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-    },
     "testClient": {
         "path": "./data/client/",
         "coreName": "Alice"
