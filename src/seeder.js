@@ -15,7 +15,7 @@ class Seeder {
      * @param {Array<{host: string, port: number}>} [opts.bootstrap]
      * @param {string} [opts.storage] corestore storage directory 
      * @param {Uint8Array} [opts.seed] seed for generating the Hyperswarm DHT keyPair
-     * @param {Uint8Array} [opts.topic] seed for generating the Hyperswarm DHT keyPair
+     * @param {Uint8Array} [opts.topic] Hyperswarm topic to announce this seeder on to be discovered by peers
      * @param {string} [opts.dbName] name of the Hyperbee DB
      */
     constructor(opts = {}) {
@@ -132,7 +132,7 @@ class Seeder {
 
         const status = await this._getValue(key)
         if (!status) return null
-        
+
         return {
             ...info,
             lastUpdated: status.lastUpdated,
