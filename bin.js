@@ -16,15 +16,13 @@ async function main() {
   opts.storage = storage && path.join(__dirname, storage)
 
   try {
-    opts.topic = Buffer.from(config.get('hyperswarm.topicKey'), 'hex')
+    opts.topic = Buffer.from(config.get('slashtags.topicKey'), 'hex')
   } catch {
-    throw new Error(
-      'Must set the topic that the hyperswarm will listen on. See hyperswarm.topicKey in config'
-    )
+    throw new Error('Must set See slashtags.topicKey in config')
   }
 
   try {
-    opts.seed = Buffer.from(config.get('hyperswarm.seed'), 'hex')
+    opts.seed = Buffer.from(config.get('slashtags.seed'), 'hex')
   } catch { }
 
   // Create the slashtag seeding server
