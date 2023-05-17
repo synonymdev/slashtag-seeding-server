@@ -1,19 +1,19 @@
-import test from 'brittle'
-import RAM from 'random-access-memory'
+const test = require('brittle')
+const RAM = require('random-access-memory')
 
-import Seeder from '../src/seeder.js'
+const Seeder = require('../src/seeder.js')
 
 test("It saves the right data to the keystore", async (t) => {
     // Setup
-    const seeder = new Seeder({storage: RAM})
+    const seeder = new Seeder({ storage: RAM })
 
     let expected = {};
 
-    seeder.db = { 
+    seeder.db = {
         put: (key, value) => {
             t.is(key, 'theKey')
             t.is(value, JSON.stringify(expected))
-        } 
+        }
     }
 
     // Call it
@@ -29,7 +29,7 @@ test("It saves the right data to the keystore", async (t) => {
 
 test("It returns null when no key is found", async (t) => {
     // Setup
-    const seeder = new Seeder({storage: RAM})
+    const seeder = new Seeder({ storage: RAM })
     seeder.db = { get: async () => null }
 
     // Call it
@@ -42,7 +42,7 @@ test("It returns null when no key is found", async (t) => {
 test("It returns the decoded value when the key is found", async (t) => {
     // Setup
     const expected = { test: 42, value: "thing" }
-    const seeder = new Seeder({storage: RAM})
+    const seeder = new Seeder({ storage: RAM })
     seeder.db = {
         get: async () => ({ key: 'test', value: JSON.stringify(expected) })
     }
@@ -57,7 +57,7 @@ test("It returns the decoded value when the key is found", async (t) => {
 // _emptyAndOld is no longer in the seeder
 test.skip("It sees empty keys as empty and old", async (t) => {
     // Setup
-    const seeder = new Seeder({storage: RAM})
+    const seeder = new Seeder({ storage: RAM })
     seeder.db = { get: async () => null }
 
     // try all the cases that will count as empty and old
@@ -98,7 +98,7 @@ test.skip("It sees empty keys as empty and old", async (t) => {
 // _emptyAndOld is no longer in the seeder
 test.skip("It sees empty keys as empty and old", async (t) => {
     // Setup
-    const seeder = new Seeder({storage: RAM})
+    const seeder = new Seeder({ storage: RAM })
     seeder.db = { get: async () => null }
 
     // try all the cases that will count as empty and old
@@ -139,7 +139,7 @@ test.skip("It sees empty keys as empty and old", async (t) => {
 // _hasBeenAbandoned is no longer in the seeder
 test.skip("It can detected Abandoned items", async (t) => {
     // Setup
-    const seeder = new Seeder({storage: RAM})
+    const seeder = new Seeder({ storage: RAM })
     seeder.db = { get: async () => null }
 
     // item does not exist
@@ -168,7 +168,7 @@ test.skip("It can detected Abandoned items", async (t) => {
 // _alreadyExists is no loger in the seeder
 test.skip("It can decide if a key already exists", async (t) => {
     // Setup
-    const seeder = new Seeder({storage: RAM})
+    const seeder = new Seeder({ storage: RAM })
     seeder.db = { get: async () => null }
 
     // item does not exist

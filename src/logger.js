@@ -1,5 +1,3 @@
-
-
 class Logger {
 
     log(level, msg) {
@@ -45,4 +43,5 @@ class Logger {
 }
 
 const logger = new Logger()
-export default logger
+
+module.exports = logger

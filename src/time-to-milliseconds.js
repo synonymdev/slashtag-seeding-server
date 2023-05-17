@@ -33,7 +33,7 @@ function _delayByUnit(t, unit) {
  * @param timeStr - string of the duration, such as "24h" for 24 hours
  * @returns {number}
  */
-export default function ms(timeStr) {
+function ms(timeStr) {
   if (typeof timeStr !== 'string') {
     return 0
   }
@@ -49,3 +49,5 @@ export default function ms(timeStr) {
   const delay = Math.max(parseFloat(m[1]), 0)
   return Math.floor(_delayByUnit(delay, m[3]))
 }
+
+module.exports = ms

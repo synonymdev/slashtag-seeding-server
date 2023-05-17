@@ -1,9 +1,14 @@
-import c from 'compact-encoding'
-import SlashtagsRPC from '@synonymdev/slashtags-rpc';
-import logger from './logger.js'
+const c = require('compact-encoding')
+const SlashtagsRPC = require('@synonymdev/slashtags-rpc');
+const logger = require('./logger.js')
 
 
-export default class SeedingProtocol extends SlashtagsRPC {
+class SeedingProtocol extends SlashtagsRPC {
+    /**
+     * @param {{
+     *  connect: (key: Uint8Array) => import('@synonymdev/slashtags-rpc').SecretStream
+     * }} slashtag
+     */
     constructor(slashtag) {
         super(slashtag)
     }
@@ -12,28 +17,28 @@ export default class SeedingProtocol extends SlashtagsRPC {
         return 'SeedingProtocol';
     }
 
-    get valueEncoding() {
-        return c.string;
-    }
-
     get methods() {
         const self = this;
         return [
             {
                 name: 'seedAdd',
-                handler: (req) => this.onAddSeed(req),
+                options: {
+                    requestEncoding: c.raw,
+                    responseEncoding: c.string
+                },
+                handler: self.onAddSeed.bind(self),
             },
             {
                 name: 'seedRemove',
-                handler: (req) => this.onRemoveSeed(req),
+                handler: self.onRemoveSeed.bind(self),
             },
         ];
     }
 
     onAddSeed(req) {
-        logger.info(req)
-        this.emit('seedAdd', { key: Buffer.from(req, 'hex') })
-        return 'ok'
+        logger.info("seedAdd key: " + req.toString('hex'))
+        this.emit('seedAdd', { key: req })
+        return "ok"
     }
 
     onRemoveSeed(req) {
@@ -64,3 +69,5 @@ export default class SeedingProtocol extends SlashtagsRPC {
         return rpc?.request('seedRemove', hypercorePubKey);
     }
 }
+
+module.exports = SeedingProtocol 

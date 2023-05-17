@@ -1,27 +1,30 @@
-import config from 'config'
-import Hyperswarm from 'hyperswarm'
-import Corestore from 'corestore'
-import Hyperbee from 'hyperbee'
-import ms from './time-to-milliseconds.js'
-import logger from './logger.js'
+const config = require('config')
+const Hyperswarm = require('hyperswarm')
+const Corestore = require('corestore')
+const Hyperbee = require('hyperbee')
+const ms = require('./time-to-milliseconds.js')
+const logger = require('./logger.js')
+const RAM = require('random-access-memory')
 
-export default class Seeder {
+const DEFAULT_DB_NAME = "Hyperbee DB"
+const DEFAULT_SEEDERS_TOPIC = Buffer.from('3b9f8ccd062ca9fc0b7dd407b4cd287ca6e2d8b32f046d7958fa7bea4d78fd75', 'hex')
+
+class Seeder {
     /**
      * @param {object} [opts]
      * @param {Array<{host: string, port: number}>} [opts.bootstrap]
-     * @param {any} [opts.storage]
+     * @param {string} [opts.storage] corestore storage directory 
+     * @param {Uint8Array} [opts.seed] seed for generating the Hyperswarm DHT keyPair
+     * @param {Uint8Array} [opts.topic] Hyperswarm topic to announce this seeder on to be discovered by peers
+     * @param {string} [opts.dbName] name of the Hyperbee DB
      */
-    constructor(opts) {
+    constructor(opts = {}) {
         // Setup Corestore
-        this.store = new Corestore(opts?.storage || config.get('store.path'), { _autoReplicate: false })
+        this.store = new Corestore(opts.storage || RAM, { _autoReplicate: false })
 
         // Setup Hyperswarm
-        // Use a seed (if configured) to generate the same Hyperswarm DHT keyPair 
-        let seed;
-        try {
-            seed = Buffer.from(config.get('hyperswarm.seed'), 'hex')
-        } catch {}
-        this.swarm = new Hyperswarm({...opts, seed})
+        this.swarm = new Hyperswarm(opts)
+        this.swarm.listen()
 
         this.swarm.on('connection', (connection, peerInfo) => {
             // track peer connections so we can disconnect later
@@ -33,24 +36,14 @@ export default class Seeder {
                 .on('error', (err) => logger.error(err))
         })
 
-        this.topicHex = config.get('hyperswarm.topicKey')
-        if (typeof this.topicHex !== 'string' || this.topicHex.length !== 64) {
-            throw new Error(
-                'Must set the topic that the hyperswarm will listen on. See hyperswarm.topicKey in config'
-            )
-        }
-        this.topic = Buffer.from(this.topicHex, 'hex')
+        this.topic = opts.topic || DEFAULT_SEEDERS_TOPIC
 
         // set up the key value DB
-        const feed = this.store.get({ name: config.get('store.dbName') })
+        const feed = this.store.get({ name: opts.dbName || DEFAULT_DB_NAME })
         this.db = new Hyperbee(feed, {
             keyEncoding: 'binary',
             valueEncoding: 'utf-8',
         })
-
-        this.pendingFlush = null
-        this.emptyLifespan = ms(config.get('store.emptyLifespan'))
-        this.fullLifespan = ms(config.get('store.fullLifespan'))
 
         // Some stats
         this.startupTime = Date.now()
@@ -72,22 +65,23 @@ export default class Seeder {
     /**
      * Await opening corestore and announcing the seeder on the seeder topic
      */
-    ready () {
+    ready() {
         return this._opening
     }
 
-    async _open () {
+    async _open() {
         // Join the swarms master topic
         await this.swarm.join(this.topic, { server: true, client: false }).flushed()
-        logger.info(`Hyperswarm joined on main topic: ${this.topicHex}`)
+        logger.info(`Hyperswarm joined on main topic: ${this.topic.toString('hex')}`)
 
         await this.db.ready?.()
+        await this.swarm.flush()
     }
 
     /**
      * Close all resources
      */
-    async close () {
+    async close() {
         await this.ready()
         await this.store.close()
         await this.swarm.destroy()
@@ -138,7 +132,7 @@ export default class Seeder {
 
         const status = await this._getValue(key)
         if (!status) return null
-        
+
         return {
             ...info,
             lastUpdated: status.lastUpdated,
@@ -279,3 +273,7 @@ export default class Seeder {
         return key.toString('hex').slice(0, 8) + '...'
     }
 }
+
+module.exports = Seeder
+
+function noop() { }

@@ -9,7 +9,7 @@ module.exports = {
         // Seeding Service
         {
             name: 'Seeder',
-            script: 'src/index.js',
+            script: 'bin.js',
             min_uptime: '5s',
             max_restarts: 10,
             kill_timeout: 30000,

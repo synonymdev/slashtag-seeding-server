@@ -1,5 +1,5 @@
 {
-    "hyperswarm": {
+    "slashtags": {
         "seed": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
         "topicKey": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
     },
@@ -15,9 +15,6 @@
         "dbName": "Hyperbee DB",
         "emptyLifespan": "1d",
         "fullLifespan": "12w"
-    },
-    "slashtags": {
-        "primaryKey": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
     },
     "testClient": {
         "path": "./data/client/",
