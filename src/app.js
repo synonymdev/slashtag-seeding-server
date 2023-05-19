@@ -11,14 +11,15 @@ class App {
         this.seeder = seeder
 
         this.port = config.get('http.port')
+        this.host = config.get('http.host')
     }
 
     async start() {
         try {
             await this.seeder.ready()
             await this.defineRoutes()
-            await this.server.listen({ port: this.port })
-            logger.info(`HTTP server listening on port ${this.port}`)
+            const addresses = await this.server.listen({ port: this.port, host: this.host })
+            logger.info(`HTTP server listening on ${addresses}`)
         } catch (err) {
             this.server.log.error(err)
             process.exit(1)
