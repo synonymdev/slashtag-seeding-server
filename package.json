@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "node bin.js",
-    "test": "brittle test/*"
+    "test": "brittle test/*",
+    "lint": "standard --fix",
+    "prepublishOnly": "npm run lint && npm run test"
   },
   "author": "",
   "license": "ISC",

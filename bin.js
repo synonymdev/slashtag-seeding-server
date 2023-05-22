@@ -7,14 +7,14 @@ const fs = require('fs')
 
 main()
 
-async function main() {
+async function main () {
   const config = getConfig()
 
   const opts = {
     dbName: config.store.dbName
   }
 
-  const storage = config.store.path;
+  const storage = config.store.path
   opts.storage = storage && path.join(__dirname, storage)
 
   try {
@@ -35,14 +35,14 @@ async function main() {
   await app.start()
 }
 
-function getConfig() {
+function getConfig () {
   try {
     return JSON.parse(
       fs.readFileSync(path.join(__dirname, './config/config.json'))
         .toString()
     )
   } catch (error) {
-    console.warn("Error while reading config", error)
+    console.warn('Error while reading config', error)
     return {}
   }
 }

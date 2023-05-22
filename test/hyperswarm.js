@@ -1,33 +1,33 @@
 const test = require('brittle')
 const RAM = require('random-access-memory')
-const Corestore = require('corestore');
+const Corestore = require('corestore')
 const Hyperswarm = require('hyperswarm')
 const createTestnet = require('@hyperswarm/testnet')
 const { tmpdir } = require('os')
 
-const Seeder = require("../src/seeder.js")
+const Seeder = require('../src/seeder.js')
 
-test("can replicate over a seeders topic", async (t) => {
+test('can replicate over a seeders topic', async (t) => {
   const testnet = await createTestnet(3, t.teardown)
 
-  const storage = tmpdir() + "/" + Math.random().toString(16).slice(2)
+  const storage = tmpdir() + '/' + Math.random().toString(16).slice(2)
 
-  let seeder = new Seeder({ bootstrap: testnet.bootstrap, storage });
+  let seeder = new Seeder({ bootstrap: testnet.bootstrap, storage })
   await seeder.ready()
 
   // Mock hypercore
-  const core = seeder.store.get({ name: "foo" })
+  const core = seeder.store.get({ name: 'foo' })
   await core.append(['foo', 'bar'])
   await core.close()
 
   // Close everything and reopen to prove peristence
   await seeder.close()
-  seeder = new Seeder({ bootstrap: testnet.bootstrap, storage });
+  seeder = new Seeder({ bootstrap: testnet.bootstrap, storage })
   await seeder.ready()
 
   // Open 10 unrequested hypercores that shouldn't be replicated
   for (let i = 0; i <= 10; i++) {
-    const core = seeder.store.get({ name: "foo" + i })
+    const core = seeder.store.get({ name: 'foo' + i })
     await core.append(['foo'])
   }
 
@@ -37,7 +37,7 @@ test("can replicate over a seeders topic", async (t) => {
   const discoveryKeys = new Set()
   const corestore = new Corestore(RAM, { _ondiscoverykey: discoveryKeys.add.bind(discoveryKeys) })
 
-  swarm.on("connection", (conn) => {
+  swarm.on('connection', (conn) => {
     corestore.replicate(conn)
   })
 

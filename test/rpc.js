@@ -20,7 +20,7 @@ test('constructor', async (t) => {
   server.close()
 })
 
-test("seedAdd", async (t) => {
+test('seedAdd', async (t) => {
   const testnet = await createTestnet(3, t.teardown)
 
   const server = new SeedingServer(testnet)
@@ -51,7 +51,7 @@ test("seedAdd", async (t) => {
   const interval = setInterval(() => {
     if (!opened.peers[0]?.remoteSynced) return
 
-    ts.pass("synced")
+    ts.pass('synced')
     clearInterval(interval)
   }, 1)
 
