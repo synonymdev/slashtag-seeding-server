@@ -1,16 +1,18 @@
-const config = require('config')
 const Fastify = require('fastify')
 const logger = require('./logger.js')
 
 class App {
     /**
      * @param {import('./seeder.js').default} seeder
+     * @param {object} [opts]
+     * @param {boolean} [opts.logger]
+     * @param {number} [opts.port]
      */
-    constructor(seeder) {
-        this.server = Fastify({ logger: config.get('http.logger') })
+    constructor(seeder, opts = {}) {
+        this.server = Fastify({ logger: opts.logger })
         this.seeder = seeder
 
-        this.port = config.get('http.port')
+        this.port = opts.port
     }
 
     async start() {
