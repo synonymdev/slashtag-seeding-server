@@ -1,5 +1,6 @@
 node_modules/
 data/
 coverage/
+types/
 config/config.json
 package-lock.json

@@ -3,7 +3,7 @@ const logger = require('./logger.js')
 
 class App {
   /**
-     * @param {import('./seeder.js').default} seeder
+     * @param {import('./seeder.js')} seeder
      * @param {object} [opts]
      * @param {boolean} [opts.logger]
      * @param {number} [opts.port]
@@ -61,7 +61,8 @@ class App {
           }
         }
       },
-      handler: async (request, reply) => {
+      handler: async (request) => {
+        // @ts-ignore
         this.seeder.registerHypercore(Buffer.from(request.body.publicKey, 'hex'))
         return { status: 'ok' }
       }
@@ -90,7 +91,7 @@ class App {
           }
         }
       },
-      handler: async (request, reply) => {
+      handler: async () => {
         // Disable for now - wait for auth
         // this.seeder.removeHypercore(Buffer.from(request.params.key, 'hex'))
         return { status: 'ok' }
@@ -127,6 +128,7 @@ class App {
         }
       },
       handler: async (request, reply) => {
+        // @ts-ignore
         const key = Buffer.from(request.params.key, 'hex')
         const status = await this.seeder.getHypercoreStatus(key)
         if (status === null) {
@@ -143,6 +145,7 @@ class App {
         }
 
         return {
+          // @ts-ignore
           key: request.params.key,
           length: status.length,
           contiguousLength: status.contiguousLength,
