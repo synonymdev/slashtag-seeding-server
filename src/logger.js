@@ -1,5 +1,6 @@
 class Logger {
   log (level, msg) {
+    if (isTest()) return
     const now = new Date()
     console.log(`${now.toISOString()} : ${level} ${msg}`)
   }
@@ -42,5 +43,9 @@ class Logger {
 }
 
 const logger = new Logger()
+
+function isTest () {
+  return !!process.env.BRITTLE
+}
 
 module.exports = logger
