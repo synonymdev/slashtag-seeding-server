@@ -18,7 +18,7 @@ class SlashServer {
   constructor (opts = {}) {
     this.seeder = opts.seeder || new Seeder(opts)
 
-    this.rpc = new SeederRPC()
+    this.rpc = new SeederRPC({ swarm: this.seeder.swarm })
     this.seeder.swarm.server.on('connection', (stream) => this.rpc.setup(stream))
 
     this.key = this.seeder.swarm.keyPair.publicKey

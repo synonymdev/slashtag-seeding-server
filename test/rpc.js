@@ -28,16 +28,18 @@ test('seedAdd', async (t) => {
 
   // Client side
   const swarm = new Hyperswarm(testnet)
-  const client = new Client()
+  const client = new Client({ swarm })
   const corestore = new Corestore(RAM)
+
+  swarm.on('connection', socket => corestore.replicate(stream))
+
   const core = corestore.get({ name: 'test' })
   await core.append(['foo', 'bar'])
 
   // Setup rpc on client side
   const stream = swarm.dht.connect(server.key)
-  corestore.replicate(stream)
 
-  const response = await client.seedAdd('seedAdd', core.key, { stream })
+  const response = await client.seedAdd(server.key, core.key)
   t.is(response, 'ok')
 
   const opened = [...server.seeder.store.cores.values()]
