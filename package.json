@@ -4,11 +4,18 @@
   "description": "Slashtags seeding server and RPC client",
   "main": "index.js",
   "scripts": {
-    "start": "node bin.js",
-    "test": "brittle test/*"
+    "test": "brittle test/* -cov",
+    "lint": "standard --fix",
+    "build": "tsc",
+    "fullcheck": "npm run lint && npm run build && npm run test",
+    "prepublishOnly": "npm run fullcheck"
   },
-  "author": "",
-  "license": "ISC",
+  "files": [
+    "index.js",
+    "src",
+    "types",
+    "!**/*.tsbuildinfo"
+  ],
   "dependencies": {
     "@hyperswarm/testnet": "^3.1.1",
     "@synonymdev/slashtags-rpc": "^1.0.0-alpha.1",
@@ -19,7 +26,10 @@
     "hyperswarm": "^4.3.6"
   },
   "devDependencies": {
+    "@types/node": "^20.2.3",
     "brittle": "^3.1.1",
-    "random-access-memory": "^6.1.0"
+    "random-access-memory": "^6.1.0",
+    "standard": "^17.0.0",
+    "typescript": "^5.0.4"
   }
 }

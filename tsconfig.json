@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "outDir": "types",
+    // shared
+    "target": "esnext",
+    "module": "esnext",
+    "strict": false,
+    "allowJs": true,
+    "checkJs": true,
+    "noEmitOnError": true,
+    "emitDeclarationOnly": true,
+    "incremental": true,
+    "composite": true,
+    "isolatedModules": true,
+    "declarationMap": true,
+    // module resolution
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    // advanced
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true
+  },
+  "include": ["index.js", "src", "test", "declaration.d.ts"]
+}
