@@ -1,8 +1,6 @@
-const config = require('config')
 const Hyperswarm = require('hyperswarm')
 const Corestore = require('corestore')
 const Hyperbee = require('hyperbee')
-const ms = require('./time-to-milliseconds.js')
 const logger = require('./logger.js')
 const RAM = require('random-access-memory')
 
