@@ -36,10 +36,9 @@ test('seedAdd', async (t) => {
   // Setup rpc on client side
   const stream = swarm.dht.connect(server.key)
   corestore.replicate(stream)
-  await stream.opened
-  const rpc = client.setup(stream)
 
-  await rpc.request('seedAdd', core.key)
+  const response = await client.seedAdd('seedAdd', core.key, { stream })
+  t.is(response, 'ok')
 
   const opened = [...server.seeder.store.cores.values()]
     .filter(c => c.key.equals(core.key))[0]
@@ -59,5 +58,4 @@ test('seedAdd', async (t) => {
 
   server.close()
   swarm.destroy()
-  rpc.destroy()
 })

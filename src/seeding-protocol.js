@@ -2,6 +2,13 @@ const c = require('compact-encoding')
 const SlashtagsRPC = require('@synonymdev/slashtags-rpc')
 const logger = require('./logger.js')
 
+const METHOD_OPTIONS = {
+  SEED_ADD: {
+    requestEncoding: c.buffer,
+    responseEncoding: c.string
+  }
+}
+
 class SeedingProtocol extends SlashtagsRPC {
   get id () {
     return 'SeedingProtocol'
@@ -12,10 +19,7 @@ class SeedingProtocol extends SlashtagsRPC {
     return [
       {
         name: 'seedAdd',
-        options: {
-          requestEncoding: c.raw,
-          responseEncoding: c.string
-        },
+        options: METHOD_OPTIONS.SEED_ADD,
         handler: self.onAddSeed.bind(self)
       },
       {
@@ -41,11 +45,13 @@ class SeedingProtocol extends SlashtagsRPC {
      * Send a request to start seeding to the seeding servers slashtag
      * @param {*} seedingServerSlashtag - 'slash:...' string
      * @param {*} hypercorePubKey - hex string
+     * @param {object} [opts]
+     * @param {import('@synonymdev/slashtags-rpc').SecretStream} [opts.stream] SecretStream connection instance
      * @returns
      */
-  async seedAdd (seedingServerSlashtag, hypercorePubKey) {
-    const rpc = await this.rpc(seedingServerSlashtag)
-    return rpc?.request('seedAdd', hypercorePubKey)
+  async seedAdd (seedingServerSlashtag, hypercorePubKey, opts = {}) {
+    const rpc = opts.stream ? this.setup(opts.stream) : await this.rpc(seedingServerSlashtag)
+    return rpc?.request('seedAdd', hypercorePubKey, METHOD_OPTIONS.SEED_ADD)
   }
 
   /**
