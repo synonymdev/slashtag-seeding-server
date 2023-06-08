@@ -45,12 +45,10 @@ class SeedingProtocol extends SlashtagsRPC {
      * Send a request to start seeding to the seeding servers slashtag
      * @param {*} seedingServerSlashtag - 'slash:...' string
      * @param {*} hypercorePubKey - hex string
-     * @param {object} [opts]
-     * @param {import('@synonymdev/slashtags-rpc').SecretStream} [opts.stream] SecretStream connection instance
-     * @returns
+     * @returns {Promise<string>}
      */
-  async seedAdd (seedingServerSlashtag, hypercorePubKey, opts = {}) {
-    const rpc = opts.stream ? this.setup(opts.stream) : await this.rpc(seedingServerSlashtag)
+  async seedAdd (seedingServerSlashtag, hypercorePubKey) {
+    const rpc = await this.rpc(seedingServerSlashtag)
     return rpc?.request('seedAdd', hypercorePubKey, METHOD_OPTIONS.SEED_ADD)
   }
 
