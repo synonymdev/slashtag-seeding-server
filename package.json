@@ -1,6 +1,6 @@
 {
   "name": "@synonymdev/slashtags-seeder",
-  "version": "1.0.0-alpha.3",
+  "version": "1.0.0-alpha.4",
   "description": "Slashtags seeding server and RPC client",
   "main": "index.js",
   "scripts": {
@@ -18,7 +18,7 @@
   ],
   "dependencies": {
     "@hyperswarm/testnet": "^3.1.1",
-    "@synonymdev/slashtags-rpc": "^1.0.0-5",
+    "@synonymdev/slashtags-rpc": "^1.0.0-alpha.5",
     "compact-encoding": "^2.11.0",
     "corestore": "github:slashtags/corestore#passive-replication",
     "fastify": "^4.2.0",
